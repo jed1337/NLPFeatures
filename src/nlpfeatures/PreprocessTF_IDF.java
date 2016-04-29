@@ -19,7 +19,8 @@ public class PreprocessTF_IDF extends Preprocess {
    }
 
 //<editor-fold defaultstate="collapsed" desc="TF IDF Outputs">
-   public void excelOutput(double outputs) throws IOException {
+   @Override
+   public void excelOutput(int outputs) throws IOException {
       output(outputs, true);
    }
    
@@ -34,14 +35,14 @@ public class PreprocessTF_IDF extends Preprocess {
          Set<String> keys = removeLowPercentageWords(percentage);
          
          if (isExcel) {
-            ExcelTools.makeExcelOutput(data, keys, outputPath + percentage + "%.xslx");
+            ExcelTools.makeExcelOutput(data, keys, outputPath + percentage + "%.xlsx");
          } else {
             CSVTools.makeCSVOutput(data, keys, outputPath + percentage + "%.csv");
          }
       }
    }
 //</editor-fold>
-   
+
 //<editor-fold defaultstate="collapsed" desc="Removers">
    private void removeInvalidWords(HashMap<String, Double> corpusWords) {
       //Remove words of length 1 except for "I"

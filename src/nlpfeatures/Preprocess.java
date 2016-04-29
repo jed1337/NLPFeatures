@@ -77,7 +77,7 @@ public abstract class Preprocess implements StringUtils{
    }
 
    private void setData(String path) throws FileNotFoundException, IOException {
-      List<List<String>> tempList = new ArrayList<>();
+      List<String[]> tempList = new ArrayList<>();
       
       //Get the workbook instance for XLS file
       try (FileInputStream file = new FileInputStream(new File(path))) {
@@ -99,25 +99,27 @@ public abstract class Preprocess implements StringUtils{
                String contents = cell.getStringCellValue();
                
                if (!contents.isEmpty()) {
-                  ArrayList<String> dataRow = new ArrayList<>(
-                     Arrays.asList(cell.getStringCellValue()
+                  String[] dataRow = 
+                     cell.getStringCellValue()
+                     .toLowerCase()
                      .replaceAll(REGEX_WHITE_LIST, " ")
-                     .replaceAll(" +", " ")
-                     .split(" ")));
-                  for (int i = 0; i < dataRow.size(); i++) {
-                     dataRow.set(i, dataRow.get(i).toLowerCase());
-                  }
+                     .replaceAll(" +", " ")              //Replace multiple spaces with a single space
+                     .split(" ");
+                  
+//                  for (int i = 0; i < dataRow.length; i++) {
+//                     dataRow[i] = dataRow[i].toLowerCase();
+//                  }
                   tempList.add(dataRow);
                }
             }
          }
       }
-      int size = tempList.size();
-      data = new String[size][];
+      int size  = tempList.size();
+      this.data = new String[size][];
       
       int i = 0;
-      for (List<String> list : tempList) {
-         data[i++] = list.toArray(new String[list.size()]);
+      for (String[] articleStringArray : tempList) {
+         this.data[i++] = articleStringArray;
       }
    }
 //</editor-fold>
@@ -135,7 +137,9 @@ public abstract class Preprocess implements StringUtils{
    }
    
    @Override
-	public String format(String word){
-		return word.toLowerCase().trim();
-	}
+   public String format(String word) {
+      return word.toLowerCase().trim();
+   }
+
+   public abstract void excelOutput(int outputs) throws IOException;
 }
