@@ -1,5 +1,5 @@
 package nlpfeatures;
 
-public interface StringUtils {
+public interface FormatString {
    public abstract String format(String word);
 }

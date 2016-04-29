@@ -11,7 +11,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-public final class Weight implements StringUtils {
+public final class Weight implements FormatString {
    private final char TAG;
    private HashMap<String, Integer> weights;
 

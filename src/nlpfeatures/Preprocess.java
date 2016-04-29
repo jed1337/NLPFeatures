@@ -20,7 +20,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-public abstract class Preprocess implements StringUtils{
+public abstract class Preprocess implements FormatString{
    private final String REGEX_WHITE_LIST     = "[^((a-zA-Z'Ññ\"’\\s-)|([\\r\\n\\t]))]+";
    private final ArrayList<String> stopwords = new ArrayList<>();
    
@@ -63,8 +63,17 @@ public abstract class Preprocess implements StringUtils{
       
       return uniqueWords;
    }
-
-
+   
+   private Iterator<Row> getInputPathIterator(String path) throws FileNotFoundException, IOException {
+      FileInputStream file  = new FileInputStream(new File(path));
+      //Get the workbook instance for XLS file
+      XSSFWorkbook workbook = new XSSFWorkbook(file);
+      //Get first sheet from the workbook
+      XSSFSheet sheet       = workbook.getSheetAt(0);
+      //Iterate through each rows from first sheet
+      Iterator<Row> rowIterator = sheet.iterator();
+      return rowIterator;
+   }
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Setters">
@@ -76,41 +85,26 @@ public abstract class Preprocess implements StringUtils{
       }
    }
 
-   private void setData(String path) throws FileNotFoundException, IOException {
+   private void setData(String inputPath) throws FileNotFoundException, IOException {
       List<String[]> tempList = new ArrayList<>();
       
-      //Get the workbook instance for XLS file
-      try (FileInputStream file = new FileInputStream(new File(path))) {
-         //Get the workbook instance for XLS file
-         XSSFWorkbook workbook = new XSSFWorkbook(file);
-         
-         //Get first sheet from the workbook
-         XSSFSheet sheet = workbook.getSheetAt(0);
-         
-         //Iterate through each rows from first sheet
-         Iterator<Row> rowIterator = sheet.iterator();
-         while (rowIterator.hasNext()) {
-            Row row = rowIterator.next();
-            
-            //For each row, iterate through each columns
-            Iterator<Cell> cellIterator = row.cellIterator();
-            while (cellIterator.hasNext()) {
-               Cell cell = cellIterator.next();
-               String contents = cell.getStringCellValue();
-               
-               if (!contents.isEmpty()) {
-                  String[] dataRow = 
-                     cell.getStringCellValue()
-                     .toLowerCase()
-                     .replaceAll(REGEX_WHITE_LIST, " ")
-                     .replaceAll(" +", " ")              //Replace multiple spaces with a single space
-                     .split(" ");
-                  
-                  tempList.add(dataRow);
-               }
+      Iterator<Row> rowIterator = getInputPathIterator(inputPath);
+      
+      while (rowIterator.hasNext()) {
+         Row row = rowIterator.next();
+
+         //For each row, iterate through each columns
+         Iterator<Cell> cellIterator = row.cellIterator();
+         while (cellIterator.hasNext()) {
+            Cell cell       = cellIterator.next();
+            String contents = cell.getStringCellValue();
+
+            if (!contents.isEmpty()) {
+               tempList.add(preprocessArticle(contents));
             }
          }
       }
+      
       int size  = tempList.size();
       this.data = new String[size][];
       
@@ -120,7 +114,7 @@ public abstract class Preprocess implements StringUtils{
       }
    }
 //</editor-fold>
-
+   
 //<editor-fold defaultstate="collapsed" desc="Outputs">
 //   public abstract void csvOutput(double outputs) throws IOException;
 //   
@@ -128,6 +122,13 @@ public abstract class Preprocess implements StringUtils{
 
    protected abstract void output(double outputs, boolean isExcel) throws IOException;   
 //</editor-fold>
+
+   private String[] preprocessArticle(String article) {
+      return article.toLowerCase()
+         .replaceAll(REGEX_WHITE_LIST, " ")
+         .replaceAll(" +", " ")              //Replace multiple spaces with a single space
+         .split(" ");
+   }
    
    protected void removeStopWords(Collection collection) {
       collection.removeAll(stopwords);

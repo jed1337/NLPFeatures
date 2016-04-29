@@ -103,12 +103,13 @@ public class PreprocessTF_IDF extends Preprocess {
       this.corpusWords = new HashMap<>();
       int articleCount = this.data.length;
 
+      TFIDFCorpus calculator = TFIDFCorpus.getSingleton(this.data);
       for (String key : getUniqueWords()) {
          double value  = 0;
 
-         TfIdfCorpus calculator = new TfIdfCorpus(this.data, key);
+         calculator.setKey(key);
          for (int j = 0; j < articleCount; j++) {
-            value += calculator.tfIdf(getDataAtIndex(j), key);
+            value += calculator.tfIdf(j);
          }
          corpusWords.put(key, value);
       }
