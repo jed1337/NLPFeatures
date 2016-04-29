@@ -30,7 +30,7 @@ public class PreprocessSO_CAL extends Preprocess {
       System.out.println(Arrays.toString(this.articleSentiments));
    }
 
-   private void tagArticle(String[] toTag, int index) {
+   public void tagArticle(String[] toTag, int index) {
       TaggedWords[] taggedWords = setTaggedWords(getTaggedWords(toTag));
 
       int articleWeight = getArticleWeight(taggedWords);
