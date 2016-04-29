@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PreprocessTF_IDF extends Preprocess {
-   private HashMap<String, Double> corpusWords;
+   private HashMap<String, Float> corpusWords;
 
    public PreprocessTF_IDF(String inputPath, String outputPath, String stopwordsPath) {
       super(inputPath, outputPath, stopwordsPath);
@@ -20,18 +20,18 @@ public class PreprocessTF_IDF extends Preprocess {
 
 //<editor-fold defaultstate="collapsed" desc="TF IDF Outputs">
    @Override
-   public void excelOutput(double outputs) throws IOException {
+   public void excelOutput(float outputs) throws IOException {
       output(outputs, true);
    }
    
-   public void csvOutput(double outputs) throws IOException {
+   public void csvOutput(float outputs) throws IOException {
       output(outputs, false);
    }
    
    @Override
-   public void output(double outputs, boolean isExcel) throws IOException {
-      for (double i = 0; i < outputs; i++) {
-         double percentage = Math.floor(1.0 * (i / outputs) * 100);
+   public void output(float outputs, boolean isExcel) throws IOException {
+      for (float i = 0; i < outputs; i++) {
+         float percentage = (float) Math.floor(1.0 * (i / outputs) * 100);
          Set<String> keys = removeLowPercentageWords(percentage);
          
          if (isExcel) {
@@ -44,13 +44,13 @@ public class PreprocessTF_IDF extends Preprocess {
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Removers">
-   private void removeInvalidWords(HashMap<String, Double> corpusWords) {
+   private void removeInvalidWords(HashMap<String, Float> corpusWords) {
       //Remove words of length 1 except for "I"
       corpusWords.keySet().removeIf(s->s.length() <= 1 && !s.equalsIgnoreCase("i"));
 
       //Remove the "-" from words Ex: "-anyos" -> "anyos", "--frj" -> "frj"
       //Remove the words which begin in "-"
-      HashMap<String, Double> temp = new HashMap<>();
+      HashMap<String, Float> temp = new HashMap<>();
       corpusWords.entrySet().stream()
               .filter(entry->entry.getKey().startsWith("-"))
               .forEach((entry)->{
@@ -69,16 +69,16 @@ public class PreprocessTF_IDF extends Preprocess {
               });
    }   
 
-   private Set<String> removeLowPercentageWords(double percentage) {
+   private Set<String> removeLowPercentageWords(float percentage) {
       int cutoff = (int) Math.floor(corpusWords.size() * percentage / 100);
-      double valCutoff;
+      float valCutoff;
 
-      List<Double> values = corpusWords.entrySet().stream()
+      List<Float> values = corpusWords.entrySet().stream()
          .sorted(Map.Entry.comparingByValue()) //Sort by value
          .map(Map.Entry::getValue)             //Reference only the map's values
          .collect(Collectors.toList());        //Return only the values
 
-      double temp = Double.MAX_VALUE;
+      float temp = Float.MAX_VALUE;
       for (int i = 0; i < values.size(); i++) {
          if (i == cutoff) {
             temp = values.get(i);   //Change temp to be the value at cutoff
@@ -88,14 +88,14 @@ public class PreprocessTF_IDF extends Preprocess {
       valCutoff = temp;               //be used in Lambda
 
       //Create a tempMap so that the original corpus can be reused
-      HashMap<String, Double> tempMap = new HashMap<>(corpusWords);
+      HashMap<String, Float> tempMap = new HashMap<>(corpusWords);
       tempMap.values().removeIf(v->v < valCutoff);  //Remove low percentage entries
 
       return tempMap.keySet();
    }
 //</editor-fold>
 
-   public HashMap<String, Double> getCorpusWords() {
+   public HashMap<String, Float> getCorpusWords() {
       return corpusWords;
    }
 
@@ -105,7 +105,7 @@ public class PreprocessTF_IDF extends Preprocess {
 
       TFIDFCorpus calculator = TFIDFCorpus.getSingleton(this.data);
       for (String key : getUniqueWords()) {
-         double value  = 0;
+         float value  = 0;
 
          calculator.setKey(key);
          for (int j = 0; j < articleCount; j++) {

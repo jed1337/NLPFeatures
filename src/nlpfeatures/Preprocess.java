@@ -116,11 +116,11 @@ public abstract class Preprocess implements FormatString{
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Outputs">
-//   public abstract void csvOutput(double outputs) throws IOException;
+//   public abstract void csvOutput(float outputs) throws IOException;
 //   
-   public abstract void excelOutput(double outputs) throws IOException;
+   public abstract void excelOutput(float outputs) throws IOException;
 
-   protected abstract void output(double outputs, boolean isExcel) throws IOException;   
+   protected abstract void output(float outputs, boolean isExcel) throws IOException;   
 //</editor-fold>
 
    private String[] preprocessArticle(String article) {
