@@ -18,25 +18,23 @@ public class PreprocessSO_CAL extends Preprocess {
       super(inputPath, outputPath, stopwordsPath);
       initializeWeights();
 
-      tagger = new MaxentTagger(TAGGER_PATH);
-      int size = data.length;
-      articleSentiments = new String[size];
+      this.tagger = new MaxentTagger(TAGGER_PATH);
+      
+      int dataLength = this.data.length;
+      this.articleSentiments = new String[dataLength];
 
-      for (int i = 0; i < size; i++) {
-         tagArticle(data[i], 0);
+      for (int i = 0; i < dataLength; i++) {
+         tagArticle(this.data[i], i);
       }
 
-      System.out.println(Arrays.toString(articleSentiments));
+      System.out.println(Arrays.toString(this.articleSentiments));
    }
 
    private void tagArticle(String[] toTag, int index) {
-      String[] words = tagger.tagString(inputToString(toTag)).split(SPACE);
-      
-      TaggedWords[] taggedWords = setTaggedWords(words);
+      TaggedWords[] taggedWords = setTaggedWords(getTaggedWords(toTag));
 
       int articleWeight = getArticleWeight(taggedWords);
 
-      System.out.println("Weight is " + articleWeight);
       String sentiment;
       if (articleWeight > 0) {
          sentiment = "Positive";
@@ -45,7 +43,13 @@ public class PreprocessSO_CAL extends Preprocess {
       } else {
          sentiment = "Neutral";
       }
+      System.out.println(String.format("Weight of %d is %d =\t %s", index, articleWeight, sentiment));
       articleSentiments[index] = sentiment;
+   }
+
+   private String[] getTaggedWords(String[] toTag) {
+      String[] words = tagger.tagString(inputToString(toTag)).split(SPACE);
+      return words;
    }
 
    private TaggedWords[] setTaggedWords(String[] words) {
@@ -71,7 +75,7 @@ public class PreprocessSO_CAL extends Preprocess {
    private String inputToString(String[] toTag) {
       StringBuilder sb = new StringBuilder();
       for (String s : toTag) {
-         sb.append(format(s));
+         sb.append(s);
          sb.append(SPACE);
       }
       return sb.toString();
@@ -96,10 +100,10 @@ public class PreprocessSO_CAL extends Preprocess {
 
    private void initializeWeights() {
       this.weights = new ArrayList<>();
-      weights.add(new Weight(WEIGHT_PATH + "ADJ.xlsx", 'J'));
-      weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
-//      weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
-      weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
-      weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
+      this.weights.add(new Weight(WEIGHT_PATH + "ADJ.xlsx", 'J'));
+      this.weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
+//      this.weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
+      this.weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
+      this.weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
    }
 }
