@@ -20,7 +20,7 @@ public class PreprocessTF_IDF extends Preprocess {
 
 //<editor-fold defaultstate="collapsed" desc="TF IDF Outputs">
    @Override
-   public void excelOutput(int outputs) throws IOException {
+   public void excelOutput(double outputs) throws IOException {
       output(outputs, true);
    }
    
@@ -100,13 +100,13 @@ public class PreprocessTF_IDF extends Preprocess {
    }
 
    private void setCorpusWords() {
-      corpusWords      = new HashMap<>();
-      int articleCount = data.length;
+      this.corpusWords = new HashMap<>();
+      int articleCount = this.data.length;
 
       for (String key : getUniqueWords()) {
          double value  = 0;
 
-         TfIdfCorpus calculator = new TfIdfCorpus(data, key);
+         TfIdfCorpus calculator = new TfIdfCorpus(this.data, key);
          for (int j = 0; j < articleCount; j++) {
             value += calculator.tfIdf(getDataAtIndex(j), key);
          }

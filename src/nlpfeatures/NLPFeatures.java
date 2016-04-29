@@ -5,8 +5,8 @@ import java.io.IOException;
 public class NLPFeatures {
 
    public static void main(String[] args) {
-//      String inputPath     = "src\\Input\\Articles.xlsx";
-      String inputPath     = "src\\Input\\Sample.xlsx";
+      String inputPath     = "src\\Input\\Articles.xlsx";
+//      String inputPath     = "src\\Input\\Sample.xlsx";
       String outputPath    = "src\\Output\\";
       String stopwordsPath = "src\\Input\\Stopwords.txt";
       int outputs          = 1;

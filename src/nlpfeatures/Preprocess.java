@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
@@ -20,8 +21,8 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public abstract class Preprocess implements StringUtils{
-   private final String REGEX_WHITE_LIST = "[^((a-zA-Z'Ññ\"’\\s-)|([\\r\\n\\t]))]+";
-   private ArrayList<String> stopwords   = new ArrayList<>();
+   private final String REGEX_WHITE_LIST     = "[^((a-zA-Z'Ññ\"’\\s-)|([\\r\\n\\t]))]+";
+   private final ArrayList<String> stopwords = new ArrayList<>();
    
    protected String outputPath;
    protected String[][] data;
@@ -51,25 +52,24 @@ public abstract class Preprocess implements StringUtils{
       return new HashSet<>(Arrays.asList(data[index])).toArray(new String[0]);
    }
 
-   public String[] getUniqueWords() {
-      List<String> listWords = new ArrayList<>();
-      for (String[] dataGroup : data) {
-         listWords.addAll(Arrays.asList(dataGroup));
+   public Set<String> getUniqueWords(){
+      Set<String> uniqueWords = new HashSet<>();
+      
+      for(String[] articles: data){
+         for(String articleWord: articles){
+            uniqueWords.add(articleWord);
+         }
       }
-      String[] tempData = listWords.toArray(new String[listWords.size()]);
-
-      return new HashSet<>(Arrays.asList(tempData)).toArray(new String[0]);
+      
+      return uniqueWords;
    }
-
-
 
 
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Setters">
    private void setStopWords(String stopwordsPath) throws FileNotFoundException, IOException{
-      BufferedReader br           = new BufferedReader(new FileReader(stopwordsPath));
-      
+      BufferedReader br = new BufferedReader(new FileReader(stopwordsPath));
       String line;
       while ((line = br.readLine()) != null) {
          stopwords.add(line.trim());
@@ -106,9 +106,6 @@ public abstract class Preprocess implements StringUtils{
                      .replaceAll(" +", " ")              //Replace multiple spaces with a single space
                      .split(" ");
                   
-//                  for (int i = 0; i < dataRow.length; i++) {
-//                     dataRow[i] = dataRow[i].toLowerCase();
-//                  }
                   tempList.add(dataRow);
                }
             }
@@ -127,7 +124,7 @@ public abstract class Preprocess implements StringUtils{
 //<editor-fold defaultstate="collapsed" desc="Outputs">
 //   public abstract void csvOutput(double outputs) throws IOException;
 //   
-//   public abstract void excelOutput(double outputs) throws IOException;
+   public abstract void excelOutput(double outputs) throws IOException;
 
    protected abstract void output(double outputs, boolean isExcel) throws IOException;   
 //</editor-fold>
@@ -140,6 +137,4 @@ public abstract class Preprocess implements StringUtils{
    public String format(String word) {
       return word.toLowerCase().trim();
    }
-
-   public abstract void excelOutput(int outputs) throws IOException;
 }

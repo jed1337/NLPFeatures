@@ -2,13 +2,16 @@ package nlpfeatures;
 
 public final class TfIdfCorpus {
    
+   /**
+    * The Inverse Document Frequency
+    */
    private final double dIdf;
    
    public TfIdfCorpus(){
       dIdf = 0;
    }
-   public TfIdfCorpus(String[][] docs, String term){
-      dIdf = idf(docs, term);
+   public TfIdfCorpus(String[][] docs, String key){
+      dIdf = idf(docs, key);
    }
    
    /**
@@ -29,15 +32,15 @@ public final class TfIdfCorpus {
 
    /**
     * @param docs list of list of strings represents the dataset
-    * @param term String represents a term
+    * @param key String represents a term
     * @return the inverse term frequency of term in documents
     */
-   public double idf(String[][] docs, String term) {
+   public double idf(String[][] docs, String key) {
       double n = 0;
 
       for (String[] doc : docs) {
          for (String word : doc) {
-            if (term.equalsIgnoreCase(word)) {
+            if (key.equalsIgnoreCase(word)) {
                n++;
                break;
             }

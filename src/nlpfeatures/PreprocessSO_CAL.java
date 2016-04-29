@@ -78,7 +78,7 @@ public class PreprocessSO_CAL extends Preprocess {
    }
 
    @Override
-   public void excelOutput(int outputs) throws IOException {
+   public void excelOutput(double outputs) throws IOException {
       output(outputs, true);
    }
 
