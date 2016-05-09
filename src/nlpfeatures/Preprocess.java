@@ -63,17 +63,6 @@ public abstract class Preprocess implements FormatString{
       
       return uniqueWords;
    }
-   
-   private Iterator<Row> getInputPathIterator(String path) throws FileNotFoundException, IOException {
-      FileInputStream file  = new FileInputStream(new File(path));
-      //Get the workbook instance for XLS file
-      XSSFWorkbook workbook = new XSSFWorkbook(file);
-      //Get first sheet from the workbook
-      XSSFSheet sheet       = workbook.getSheetAt(0);
-      //Iterate through each rows from first sheet
-      Iterator<Row> rowIterator = sheet.iterator();
-      return rowIterator;
-   }
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Setters">
@@ -97,7 +86,10 @@ public abstract class Preprocess implements FormatString{
    private void setData(String inputPath) throws FileNotFoundException, IOException {
       List<String[]> tempList = new ArrayList<>();
       
-      Iterator<Row> rowIterator = getInputPathIterator(inputPath);
+      //Iterate through each rows from first sheet
+      Iterator<Row> rowIterator = ExcelTools.getRowIterator(inputPath);
+      
+//      Iterator<Row> rowIterator = sheet.iterator();
       
       while (rowIterator.hasNext()) {
          Row row = rowIterator.next();
@@ -126,7 +118,6 @@ public abstract class Preprocess implements FormatString{
    
 //<editor-fold defaultstate="collapsed" desc="Outputs">
 //   public abstract void csvOutput(float outputs) throws IOException;
-//   
    public abstract void excelOutput(float outputs) throws IOException;
 
    protected abstract void output(float outputs, boolean isExcel) throws IOException;   

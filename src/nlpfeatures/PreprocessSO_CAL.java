@@ -170,11 +170,15 @@ public class PreprocessSO_CAL extends Preprocess {
 //</editor-fold>
    
    private void initializeWeights() {
-      this.weights = new ArrayList<>();
-      this.weights.add(new Weight(WEIGHT_PATH + "ADJ.xlsx", 'J'));
-      this.weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
+      try {
+         this.weights = new ArrayList<>();
+         this.weights.add(new Weight(WEIGHT_PATH + "ADJ.xlsx", 'J'));
+         this.weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
 //      this.weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
-      this.weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
-      this.weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
+         this.weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
+         this.weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
+      } catch (IOException ex) {
+         System.err.println(ex.getMessage());
+      }
    }
 }
