@@ -9,11 +9,11 @@ public class NLPFeatures {
       String inputPath     = "src\\Input\\Sample.xlsx";
       String outputPath    = "src\\Output\\";
       String stopwordsPath = "src\\Input\\Stopwords.txt";
-      int outputs          = 1;
+      int outputs          = 20;
 
 //      Preprocess p = new PreprocessSO_CAL(inputPath, outputPath, stopwordsPath, 2);
-      Preprocess p = new PreprocessSO_CAL(inputPath, outputPath, stopwordsPath, 4);
-//      Preprocess p = new PreprocessTF_IDF(inputPath, outputPath, stopwordsPath);
+//      Preprocess p = new PreprocessSO_CAL(inputPath, outputPath, stopwordsPath, 4);
+      Preprocess p = new PreprocessTF_IDF(inputPath, outputPath, stopwordsPath);
       
       try {
          p.excelOutput(outputs);

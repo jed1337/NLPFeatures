@@ -85,6 +85,15 @@ public abstract class Preprocess implements FormatString{
       }
    }
 
+   /**
+    * Sets the data of String[][] this.data
+    * this.data[i] = article i
+    * this.data[i][j] = word j in article i
+    * 
+    * @param inputPath Path of the excel file containing articles
+    * @throws FileNotFoundException If the file indicated by inputPath is not found
+    * @throws IOException 
+    */
    private void setData(String inputPath) throws FileNotFoundException, IOException {
       List<String[]> tempList = new ArrayList<>();
       
@@ -123,6 +132,11 @@ public abstract class Preprocess implements FormatString{
    protected abstract void output(float outputs, boolean isExcel) throws IOException;   
 //</editor-fold>
 
+   /**
+    * Returns the words in the article
+    * @param article
+    * @return 
+    */
    private String[] preprocessArticle(String article) {
       return article.toLowerCase()
          .replaceAll(REGEX_WHITE_LIST, " ")
@@ -130,6 +144,10 @@ public abstract class Preprocess implements FormatString{
          .split(" ");
    }
    
+   /**
+    * Removes the stopwords from the given collection
+    * @param collection 
+    */
    protected void removeStopWords(Collection collection) {
       collection.removeAll(stopwords);
    }
