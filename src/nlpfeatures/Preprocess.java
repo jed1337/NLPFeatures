@@ -1,8 +1,6 @@
 package nlpfeatures;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -17,8 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public abstract class Preprocess implements FormatString{
    private final String REGEX_WHITE_LIST     = "[^((a-zA-Z'Ññ\"’\\s-)|([\\r\\n\\t]))]+";
@@ -27,10 +23,10 @@ public abstract class Preprocess implements FormatString{
    protected String outputPath;
    protected String[][] data;
 
-   public Preprocess(String inputPath, String outputPath, String stopwordsPath) {
+   protected Preprocess(String inputPath, String outputPath, String stopwordsPath, boolean preprocessArticle) {
       try {
          this.outputPath = outputPath;
-         setData(inputPath);
+         setData(inputPath, preprocessArticle);
          setStopWords(stopwordsPath);
          
       } catch (IOException ex) {
@@ -83,7 +79,7 @@ public abstract class Preprocess implements FormatString{
     * @throws FileNotFoundException If the file indicated by inputPath is not found
     * @throws IOException 
     */
-   private void setData(String inputPath) throws FileNotFoundException, IOException {
+   private void setData(String inputPath, boolean preprocessArticle) throws FileNotFoundException, IOException {
       List<String[]> tempList = new ArrayList<>();
       
       //Iterate through each rows from first sheet
@@ -101,7 +97,10 @@ public abstract class Preprocess implements FormatString{
             String contents = cell.getStringCellValue();
 
             if (!contents.isEmpty()) {
-               tempList.add(preprocessArticle(contents));
+               if(preprocessArticle)
+                  tempList.add(preprocessArticle(contents));
+               else
+                  tempList.add(contents.split("\\s+"));
             }
          }
       }

@@ -17,7 +17,7 @@ public final class Weight implements FormatString {
    }
 
    private void setWeights(String inputPath) throws IOException {
-      weights = new HashMap<>();
+      this.weights = new HashMap<>();
 
       // Get the workbook instance for XLS file
       Iterator<Row> rowIterator = ExcelTools.getRowIterator(inputPath);
@@ -28,8 +28,8 @@ public final class Weight implements FormatString {
 
          try {
             String word = format(cellIterator.next().getStringCellValue());
-            int value = (int) cellIterator.next().getNumericCellValue();
-            weights.put(word, value);
+            int value   = (int) cellIterator.next().getNumericCellValue();
+            this.weights.put(word, value);
          } catch (IllegalStateException e) {
             System.err.println(e);
             rowIterator.next();

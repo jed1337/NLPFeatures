@@ -11,7 +11,7 @@ public class PreprocessTF_IDF extends Preprocess {
    private HashMap<String, Float> corpusWords;
 
    public PreprocessTF_IDF(String inputPath, String outputPath, String stopwordsPath) {
-      super(inputPath, outputPath, stopwordsPath);
+      super(inputPath, outputPath, stopwordsPath, true);
       
       setCorpusWords();
       removeStopWords(corpusWords.keySet());

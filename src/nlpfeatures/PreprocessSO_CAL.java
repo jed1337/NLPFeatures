@@ -17,7 +17,7 @@ public class PreprocessSO_CAL extends Preprocess {
    private ArrayList<Weight> weights;
 
    public PreprocessSO_CAL(String inputPath, String outputPath, String stopwordsPath, int threadCount) {
-      super(inputPath, outputPath, stopwordsPath);
+      super(inputPath, outputPath, stopwordsPath, false);
       initializeWeights();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
@@ -32,10 +32,15 @@ public class PreprocessSO_CAL extends Preprocess {
    }
    
 //<editor-fold defaultstate="collapsed" desc="Worker Thread Functions">
+   /**
+    * Sets which data each worker needs to process
+    * @param threadCount The number of threads to be used
+    * @return 
+    */
    private Worker[] initializeWorkerThreads(int threadCount) {
       Worker[] workers = new Worker[threadCount];
       
-      int partition = data.length/threadCount;
+      int partition = this.data.length/threadCount;
       for (int i = 0; i < workers.length; i++) {
          int start = i*partition;
          int end   = (i+1)*partition;
@@ -52,6 +57,12 @@ public class PreprocessSO_CAL extends Preprocess {
       return workers;
    }
    
+   /**
+    * Starts the worker threads and waits for them to finish executing
+    * before continuing on with the program
+    * 
+    * @param workers An array of Worker threads
+    */
    private void startWorkers(Worker[] workers) {
       for (int i = 0; i < workers.length; i++) {
          System.out.println("Worker "+i+": " + workers[i]);
@@ -82,7 +93,8 @@ public class PreprocessSO_CAL extends Preprocess {
       public void run() {
          for(int i=start; i<end; i++){
             System.out.println("i = " + i);
-            tagArticle(i);
+            int articleWeight = getArticleWeight(i);
+            classifyArticle(articleWeight, i);
          }
       }
       
@@ -94,12 +106,23 @@ public class PreprocessSO_CAL extends Preprocess {
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Tag Article">
-   
-   private void tagArticle(int index) {
-      TaggedWords[] taggedWords = setTaggedWords(getTaggedWords(this.data[index]));
-      
-      int articleWeight = getArticleWeight(taggedWords);
-      
+   /**
+    * Tags an article and gets its weight
+    * @param index 
+    */
+   private int getArticleWeight(int index) {
+      String taggedArticle      = tagger.tagString(inputToString(data[index]));
+      TaggedWords[] taggedWords = setTaggedWords(taggedArticle);
+      return getArticleWeight(taggedWords);
+   }
+
+   /**
+    * Given the weight of the article at the index, the function classifies
+    * it into positive, negative or neutral
+    * @param articleWeight 
+    * @param index 
+    */
+   private void classifyArticle(int articleWeight, int index) {
       String sentiment;
       if (articleWeight > 0) {
          sentiment = "Positive";
@@ -109,21 +132,23 @@ public class PreprocessSO_CAL extends Preprocess {
          sentiment = "Neutral";
       }
       System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
-      articleSentiments[index] = sentiment;
+      this.articleSentiments[index] = sentiment;
    }
    
-   private String[] getTaggedWords(String[] toTag) {
-      System.out.println("Tagging");
-      String[] words = tagger.tagString(inputToString(toTag)).split(SPACE);
-      System.out.println("Done tagging");
-      return words;
-   }
-   
-   private TaggedWords[] setTaggedWords(String[] words) {
-      TaggedWords[] taggedWords = new TaggedWords[words.length];
-      int i = 0;
-      for (String word : words) {
-         taggedWords[i++] = new TaggedWords(word);
+   /**
+    * Given an already tagged articles, this function returns an array of TaggedWords
+    * that contain a word and its appropriate tag
+    * 
+    * @param taggedArticle
+    * @return 
+    */
+   private TaggedWords[] setTaggedWords(String taggedArticle) {
+      String[] articleWords     = taggedArticle.split("\\s+");
+      int awLength              = articleWords.length;
+      TaggedWords[] taggedWords = new TaggedWords[awLength];
+      
+      for (int i = 0; i < awLength; i++) {
+         taggedWords[i] = new TaggedWords(articleWords[i]);
       }
       return taggedWords;
    }

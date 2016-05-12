@@ -8,11 +8,11 @@ public class TaggedWords {
       String[] temp = wordWithTag.split("/");
       
       if(temp.length==2){
-         tag  = temp[1].charAt(0);
-         word = temp[0];
+         this.tag  = temp[1].charAt(0);
+         this.word = temp[0];
       } else{
-         word = "___";
-         tag = '?';
+         this.word = "___";
+         this.tag = '?';
       }
    }
 
