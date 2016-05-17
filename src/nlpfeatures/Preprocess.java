@@ -23,11 +23,11 @@ public abstract class Preprocess implements FormatString{
    protected String outputPath;
    protected String[][] data;
 
-   protected Preprocess(String inputPath, String outputPath, String stopwordsPath, boolean preprocessArticle) {
+   protected Preprocess(Path path, boolean preprocessArticle) {
       try {
-         this.outputPath = outputPath;
-         setData(inputPath, preprocessArticle);
-         setStopWords(stopwordsPath);
+         this.outputPath = path.getOutputPath();
+         setData(path.getInputPath(), preprocessArticle);
+         setStopWords(path.getStopwordsPath());
          
       } catch (IOException ex) {
          Logger.getLogger(Preprocess.class.getName()).log(Level.SEVERE, null, ex);
@@ -76,6 +76,8 @@ public abstract class Preprocess implements FormatString{
     * this.data[i][j] = word j in article i
     * 
     * @param inputPath Path of the excel file containing articles
+    * @param preprocessArticle true if the article is to be preprocessed before added,
+    * false if the raw article, split by whitepsaces, is added instead
     * @throws FileNotFoundException If the file indicated by inputPath is not found
     * @throws IOException 
     */
@@ -84,8 +86,6 @@ public abstract class Preprocess implements FormatString{
       
       //Iterate through each rows from first sheet
       Iterator<Row> rowIterator = ExcelTools.getRowIterator(inputPath);
-      
-//      Iterator<Row> rowIterator = sheet.iterator();
       
       while (rowIterator.hasNext()) {
          Row row = rowIterator.next();
@@ -130,8 +130,7 @@ public abstract class Preprocess implements FormatString{
    private String[] preprocessArticle(String article) {
       return article.toLowerCase()
          .replaceAll(REGEX_WHITE_LIST, " ")
-         .replaceAll(" +", " ")              //Replace multiple spaces with a single space
-         .split(" ");
+         .split("\\s+");
    }
    
    /**
@@ -140,6 +139,10 @@ public abstract class Preprocess implements FormatString{
     */
    protected void removeStopWords(Collection collection) {
       collection.removeAll(stopwords);
+   }
+   
+   protected void printErrors(Exception ex) {
+      System.err.println(ex.getMessage());
    }
    
    @Override

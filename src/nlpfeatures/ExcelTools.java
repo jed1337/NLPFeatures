@@ -15,7 +15,17 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelTools{
-  
+   //Make this not repeat code
+   public static void makeExcelOutput(String[]data, String outputPath) throws FileNotFoundException, IOException {
+      //Keep 100 rows in memory, exceeding rows will be flushed to disk
+      SXSSFWorkbook workbook = new SXSSFWorkbook(100);
+      Sheet sheet            = workbook.createSheet();
+      
+      makeOutputRows(data, sheet);
+      
+      closeCreatedFile(workbook, outputPath);
+   }
+   
    public static void makeExcelOutput(String[][]data, Set<String> keys, String outputPath) 
       throws FileNotFoundException, IOException {
       
@@ -23,13 +33,13 @@ public class ExcelTools{
       SXSSFWorkbook workbook = new SXSSFWorkbook(100);
       Sheet sheet            = workbook.createSheet();
       
-      makeOutputHeader(sheet, keys);
-      makeOutputRows(sheet, keys, data);
+      makeOutputHeader(keys, sheet);
+      makeOutputRows(data, keys, sheet);
       
       closeCreatedFile(workbook, outputPath);
    }
 
-   private static void makeOutputHeader(Sheet sheet, Set<String> keys) {
+   private static void makeOutputHeader(Set<String> keys, Sheet sheet) {
       Row header     = sheet.createRow(0);
       int hCellCount = 0;
       header.createCell(hCellCount++).setCellValue("Article");
@@ -39,7 +49,25 @@ public class ExcelTools{
       }
    }
    
-   private static void makeOutputRows(Sheet sheet, Set<String> key, String[][] data) {
+   /**
+    * Structure:
+    * 1. data[0]
+    * 2. data[1]
+    * 3. data[2]
+    * N. data[N-1]
+    * @param data
+    * @param sheet 
+    */
+   private static void makeOutputRows(String[] data, Sheet sheet) {
+      for (int i = 1; i <= data.length; i++) {
+         Row row        = sheet.createRow(i);
+         int rCellCount = 0;
+         row.createCell(rCellCount++).setCellValue(i);
+         row.createCell(rCellCount++).setCellValue(data[i-1]);
+      }      
+   }
+   
+   private static void makeOutputRows(String[][] data, Set<String> key, Sheet sheet) {
       for (int i = 0; i < data.length; i++) {
          String article = Arrays.toString(data[i]);
          

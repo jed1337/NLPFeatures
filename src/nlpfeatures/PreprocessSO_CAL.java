@@ -4,8 +4,6 @@ import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class PreprocessSO_CAL extends Preprocess {
    private final String WEIGHT_PATH = "src\\weights\\";
@@ -16,26 +14,24 @@ public class PreprocessSO_CAL extends Preprocess {
 
    private ArrayList<Weight> weights;
 
-   public PreprocessSO_CAL(String inputPath, String outputPath, String stopwordsPath, int threadCount) {
-      super(inputPath, outputPath, stopwordsPath, false);
+   public PreprocessSO_CAL(Path path, int threadCount) {
+      super(path, false);
       initializeWeights();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
       this.articleSentiments = new String[data.length];
       
       Worker[] workers = initializeWorkerThreads(threadCount);
-      
-      System.out.println("Started tagging");
-      
       startWorkers(workers);
       
+      System.out.println(Arrays.toString(this.articleSentiments));
    }
    
 //<editor-fold defaultstate="collapsed" desc="Worker Thread Functions">
    /**
     * Sets which data each worker needs to process
     * @param threadCount The number of threads to be used
-    * @return 
+    * @return
     */
    private Worker[] initializeWorkerThreads(int threadCount) {
       Worker[] workers = new Worker[threadCount];
@@ -64,6 +60,8 @@ public class PreprocessSO_CAL extends Preprocess {
     * @param workers An array of Worker threads
     */
    private void startWorkers(Worker[] workers) {
+      System.out.println("Started tagging");
+      
       for (int i = 0; i < workers.length; i++) {
          System.out.println("Worker "+i+": " + workers[i]);
          workers[i].start();
@@ -73,11 +71,9 @@ public class PreprocessSO_CAL extends Preprocess {
          try {
             worker.join();
          } catch (InterruptedException ex) {
-            Logger.getLogger(PreprocessSO_CAL.class.getName()).log(Level.SEVERE, null, ex);
+            printErrors(ex);
          }
       }
-      
-      System.out.println(Arrays.toString(this.articleSentiments));
    }
    
    private class Worker extends Thread{
@@ -111,7 +107,7 @@ public class PreprocessSO_CAL extends Preprocess {
     * @param index 
     */
    private int getArticleWeight(int index) {
-      String taggedArticle      = tagger.tagString(inputToString(data[index]));
+      String taggedArticle      = this.tagger.tagString(inputToString(data[index]));
       TaggedWords[] taggedWords = setTaggedWords(taggedArticle);
       return getArticleWeight(taggedWords);
    }
@@ -157,9 +153,9 @@ public class PreprocessSO_CAL extends Preprocess {
       int articleWeight = 0;
       for (Weight w : weights) {
          articleWeight += Arrays.stream(taggedWords)
-                 .filter(tw->tw.getTag() == w.getTag()) //The Weight tag is equal to the tag of the current word
-                 .map(tw->w.getWordValue(tw.getWord())) //Get only the weights of each word (int)
-                 .reduce(0, (acc, item)->acc + item);   //Collect all the weights, and return their total
+            .filter(tw->tw.getTag() == w.getTag()) //The Weight tag is equal to the tag of the current word
+            .map(tw->w.getWordValue(tw.getWord())) //Get only the weights of each word (int)
+            .reduce(0, (acc, item)->acc + item);   //Collect all the weights, and return their total
       }
       return articleWeight;
    }
@@ -183,14 +179,11 @@ public class PreprocessSO_CAL extends Preprocess {
    
    @Override
    protected void output(float outputs, boolean isExcel) throws IOException {
-      for(int i=0;i<articleSentiments.length;i++){
-         System.out.println(i+"\t"+articleSentiments[i]);
+      if (isExcel) {
+         ExcelTools.makeExcelOutput(this.articleSentiments, outputPath+"SO_CAL.xlsx");
+      } else {
+         System.err.println("CSV Not supported yet");
       }
-//      if (isExcel) {
-//         ExcelTools.makeExcelOutput(data, keys, outputPath + percentage + "%.xslx");
-//      } else {
-//         CSVTools.makeCSVOutput(data, keys, outputPath + percentage + "%.csv");
-//      }
    }
 //</editor-fold>
    
@@ -199,11 +192,11 @@ public class PreprocessSO_CAL extends Preprocess {
          this.weights = new ArrayList<>();
          this.weights.add(new Weight(WEIGHT_PATH + "ADJ.xlsx", 'J'));
          this.weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
-//      this.weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
          this.weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
          this.weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
+//      this.weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
       } catch (IOException ex) {
-         System.err.println(ex.getMessage());
+         printErrors(ex);
       }
    }
 }
