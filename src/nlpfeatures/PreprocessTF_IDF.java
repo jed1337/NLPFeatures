@@ -35,9 +35,9 @@ public class PreprocessTF_IDF extends Preprocess {
          Set<String> keys = removeLowPercentageWords(percentage);
          
          if (isExcel) {
-            ExcelTools.makeExcelOutput(data, keys, outputPath + percentage + "%.xlsx");
+            ExcelOutput.output(articles, keys, outputPath + percentage + "%.xlsx");
          } else {
-            CSVTools.makeCSVOutput(data, keys, outputPath + percentage + "%.csv");
+            CSVOutput.output(articles, keys, outputPath + percentage + "%.csv");
          }
       }
    }
@@ -101,9 +101,9 @@ public class PreprocessTF_IDF extends Preprocess {
 
    private void setCorpusWords() {
       this.corpusWords = new HashMap<>();
-      int articleCount = this.data.length;
+      int articleCount = this.articles.size();
 
-      TFIDFCorpus calculator = TFIDFCorpus.getSingleton(this.data);
+      TFIDFCorpus calculator = TFIDFCorpus.getSingleton(this.articles);
       for (String key : getUniqueWords()) {
          float value  = 0;
 

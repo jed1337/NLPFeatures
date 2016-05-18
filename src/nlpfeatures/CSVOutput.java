@@ -3,20 +3,21 @@ package nlpfeatures;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 
-public class CSVTools {
+public class CSVOutput {
    private static final char NEW_LINE = '\n';
    
-   public static void makeCSVOutput(String[][] data, Set<String> keys, String outputPath)
+   public static void output(ArrayList<Article> articles, Set<String> keys, String outputPath)
            throws FileNotFoundException, IOException {
       FileWriter writer = new FileWriter(outputPath);
 
-      makeOutputHeader(writer, keys);
-      makeOutputRows(writer, keys, data);
+      makeHeader(keys, writer);
+      makeRows(keys, articles, writer);
 
-      closeCreatedFile(writer);
+      closeFile(writer);
    }
 
    private static void append(StringBuilder sb, String text) throws IOException{
@@ -25,7 +26,7 @@ public class CSVTools {
       sb.append(COMMA);
    }
    
-   private static void makeOutputHeader(FileWriter writer, Set<String> keys) throws IOException {
+   private static void makeHeader(Set<String> keys, FileWriter writer) throws IOException {
       StringBuilder sb = new StringBuilder();
       append(sb, "Article");
       
@@ -36,10 +37,10 @@ public class CSVTools {
       writer.append(sb);
    }
 
-   private static void makeOutputRows(FileWriter writer, Set<String> keys, String[][] data) throws IOException {
+   private static void makeRows(Set<String> keys, ArrayList<Article> articles, FileWriter writer) throws IOException {
       StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < data.length; i++) {
-         String article = Arrays.toString(data[i]);
+      for (int i = 0; i < articles.size(); i++) {
+         String article = Arrays.toString(articles.get(i).getWords());
          append(sb, "Article "+i);
 
          for (String key : keys) {
@@ -50,7 +51,7 @@ public class CSVTools {
       writer.append(sb);
    }
 
-   private static void closeCreatedFile(FileWriter writer) throws IOException {
+   private static void closeFile(FileWriter writer) throws IOException {
       writer.flush();
       writer.close();
    }

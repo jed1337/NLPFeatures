@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
+import java.util.InputMismatchException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
@@ -21,12 +21,14 @@ public abstract class Preprocess implements FormatString{
    private final ArrayList<String> stopwords = new ArrayList<>();
    
    protected String outputPath;
-   protected String[][] data;
+//   protected String[][] articles;
+   protected ArrayList<Article> articles;
 
    protected Preprocess(Path path, boolean preprocessArticle) {
       try {
+         this.articles   = new ArrayList<>();
          this.outputPath = path.getOutputPath();
-         setData(path.getInputPath(), preprocessArticle);
+         setArticles(path.getInputPath(), preprocessArticle);
          setStopWords(path.getStopwordsPath());
          
       } catch (IOException ex) {
@@ -37,23 +39,27 @@ public abstract class Preprocess implements FormatString{
 //<editor-fold defaultstate="collapsed" desc="Getters">
 
    public String[] getDataAtIndex(int index) {
-      return this.data[index];
+//      return this.articles[index];
+      return articles.get(index).getWords();
    }
-
-   public String[][] getAllData() {
-      return this.data;
-   }
-
+   
    public String[] getUniqueWords(int index) {
-      return new HashSet<>(Arrays.asList(data[index])).toArray(new String[0]);
+      return new HashSet<>(Arrays.asList(articles.get(index).getWords()))
+         .toArray(new String[0]);
    }
 
    public Set<String> getUniqueWords(){
       Set<String> uniqueWords = new HashSet<>();
       
-      for(String[] articles: data){
-         for(String articleWord: articles){
-            uniqueWords.add(articleWord);
+//      for(String[] articles: articles){
+//         for(String articleWord: articles){
+//            uniqueWords.add(articleWord);
+//         }
+//      }
+      
+      for(Article article: articles){
+         for(String word: article.getWords()){
+            uniqueWords.add(word);
          }
       }
       
@@ -71,9 +77,9 @@ public abstract class Preprocess implements FormatString{
    }
 
    /**
-    * Sets the data of String[][] this.data
-    * this.data[i] = article i
-    * this.data[i][j] = word j in article i
+    * Sets the articles of String[][] this.articles
+    * this.articles[i] = article i
+    * this.articles[i][j] = word j in article i
     * 
     * @param inputPath Path of the excel file containing articles
     * @param preprocessArticle true if the article is to be preprocessed before added,
@@ -81,37 +87,42 @@ public abstract class Preprocess implements FormatString{
     * @throws FileNotFoundException If the file indicated by inputPath is not found
     * @throws IOException 
     */
-   private void setData(String inputPath, boolean preprocessArticle) throws FileNotFoundException, IOException {
-      List<String[]> tempList = new ArrayList<>();
-      
+   private void setArticles(String inputPath, boolean preprocessArticle) throws FileNotFoundException, IOException {
       //Iterate through each rows from first sheet
-      Iterator<Row> rowIterator = ExcelTools.getRowIterator(inputPath);
+      Iterator<Row> rowIterator = ExcelOutput.getRowIterator(inputPath);
       
       while (rowIterator.hasNext()) {
          Row row = rowIterator.next();
-
-         //For each row, iterate through each columns
          Iterator<Cell> cellIterator = row.cellIterator();
-         while (cellIterator.hasNext()) {
-            Cell cell       = cellIterator.next();
-            String contents = cell.getStringCellValue();
+         
+         try{
+            String contents     = cellIterator.next().getStringCellValue();
+            Sentiment sentiment = Sentiment.getSentiment(cellIterator.next().getStringCellValue());
 
             if (!contents.isEmpty()) {
+               String[] words;
                if(preprocessArticle)
-                  tempList.add(preprocessArticle(contents));
+                  words = preprocessArticle(contents);
+//                  tempList.add(preprocessArticle(contents));
                else
-                  tempList.add(contents.split("\\s+"));
+                  words = contents.split("\\s+");
+//                  this.articles.add(new Article(contents.split("\\s+"), sentiment));
+//                  tempList.add(contents.split("\\s+"));
+               this.articles.add(new Article(words, sentiment));
             }
+         }catch(InputMismatchException e){
+            System.out.println("eow");
+//            printErrors(e);
+//            rowIterator.next();
          }
       }
       
-      int size  = tempList.size();
-      this.data = new String[size][];
-      
-      int i = 0;
-      for (String[] articleStringArray : tempList) {
-         this.data[i++] = articleStringArray;
-      }
+//      int size       = tempList.size();
+//      this.articles = new String[size][];
+//      int i = 0;
+//      for (String[] articleStringArray : tempList) {
+//         this.articles[i++] = articleStringArray;
+//      }
    }
 //</editor-fold>
    

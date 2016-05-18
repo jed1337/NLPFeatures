@@ -19,7 +19,7 @@ public class PreprocessSO_CAL extends Preprocess {
       initializeWeights();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
-      this.articleSentiments = new Sentiment[data.length];
+      this.articleSentiments = new Sentiment[articles.size()];
       
       Worker[] workers = initializeWorkerThreads(threadCount);
       startWorkers(workers);
@@ -29,14 +29,14 @@ public class PreprocessSO_CAL extends Preprocess {
    
 //<editor-fold defaultstate="collapsed" desc="Worker Thread Functions">
    /**
-    * Sets which data each worker needs to process
+    * Sets which articles each worker needs to process
     * @param threadCount The number of threads to be used
     * @return
     */
    private Worker[] initializeWorkerThreads(int threadCount) {
       Worker[] workers = new Worker[threadCount];
       
-      int partition = this.data.length/threadCount;
+      int partition = this.articles.size()/threadCount;
       for (int i = 0; i < workers.length; i++) {
          int start = i*partition;
          int end   = (i+1)*partition;
@@ -44,7 +44,7 @@ public class PreprocessSO_CAL extends Preprocess {
          //If the number of articles is not divisible by the number of threads
          //Add the remaining articles to the last worker thread
          if(i == (workers.length-1)){
-            end += data.length % threadCount;
+            end += articles.size() % threadCount;
          }
          
          workers[i] = new Worker(start, end);
@@ -107,7 +107,7 @@ public class PreprocessSO_CAL extends Preprocess {
     * @param index 
     */
    private int getArticleWeight(int index) {
-      String taggedArticle      = this.tagger.tagString(inputToString(data[index]));
+      String taggedArticle      = this.tagger.tagString(inputToString(getDataAtIndex(index)));
       TaggedWords[] taggedWords = setTaggedWords(taggedArticle);
       return getArticleWeight(taggedWords);
    }
@@ -180,7 +180,7 @@ public class PreprocessSO_CAL extends Preprocess {
    @Override
    protected void output(float outputs, boolean isExcel) throws IOException {
       if (isExcel) {
-         ExcelTools.makeExcelOutput(this.articleSentiments, outputPath+"SO_CAL.xlsx");
+         ExcelOutput.output(this.articleSentiments, outputPath+"SO_CAL.xlsx");
       } else {
          System.err.println("CSV Not supported yet");
       }

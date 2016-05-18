@@ -1,18 +1,20 @@
 package nlpfeatures;
 
+import java.util.ArrayList;
+
 public final class TFIDFCorpus {
-   private final String[][] articles;
+   private final ArrayList<Article> articles;
    private double dIdf;
    private String key;
    
    private static TFIDFCorpus singleton = null;
 
-   private TFIDFCorpus(String[][] articles) {
+   private TFIDFCorpus(ArrayList<Article> articles) {
       this.articles = articles;
       this.key = null;
    }
    
-   public static TFIDFCorpus getSingleton(String[][] articles){
+   public static TFIDFCorpus getSingleton(ArrayList<Article> articles){
       if(singleton == null){
          singleton = new TFIDFCorpus(articles);
       }
@@ -36,13 +38,13 @@ public final class TFIDFCorpus {
          throw new IllegalStateException("The key has not been set.");
       }
       
-      for (String word : this.articles[articleNum]) {
+      for (String word : this.articles.get(articleNum).getWords()) {
          if (this.key.equals(word)) {
             result++;
          }
       }
       
-      result /= this.articles[articleNum].length;
+      result /= this.articles.get(articleNum).getWords().length;
       if(result == Double.NaN){
          throw new ArithmeticException("Result is NaN");
       }
@@ -54,18 +56,18 @@ public final class TFIDFCorpus {
     * @param key String represents a term
     * @return the inverse term frequency of term in documents
     */
-   private double idf(String[][] docs, String key) {
+   private double idf(ArrayList<Article> articles, String key) {
       double n = 0;
       
-      for (String[] doc : docs) {
-         for (String word : doc) {
+      for (Article article : articles) {
+         for (String word : article.getWords()) {
             if (key.equals(word)) {
                n++;
                break;
             }
          }
       }
-      return Math.log(docs.length / n);
+      return Math.log(articles.size() / n);
    }
 
    /**

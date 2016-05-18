@@ -20,10 +20,9 @@ public final class Weight implements FormatString {
       this.weights = new HashMap<>();
 
       // Get the workbook instance for XLS file
-      Iterator<Row> rowIterator = ExcelTools.getRowIterator(inputPath);
+      Iterator<Row> rowIterator = ExcelOutput.getRowIterator(inputPath);
       while (rowIterator.hasNext()) {
          Row row = rowIterator.next();
-
          Iterator<Cell> cellIterator = row.cellIterator();
 
          try {
