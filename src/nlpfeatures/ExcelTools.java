@@ -16,12 +16,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelTools{
    //Make this not repeat code
-   public static void makeExcelOutput(String[]data, String outputPath) throws FileNotFoundException, IOException {
+   public static void makeExcelOutput(Sentiment[]sentiments, String outputPath) throws FileNotFoundException, IOException {
       //Keep 100 rows in memory, exceeding rows will be flushed to disk
       SXSSFWorkbook workbook = new SXSSFWorkbook(100);
       Sheet sheet            = workbook.createSheet();
       
-      makeOutputRows(data, sheet);
+      makeOutputRows(sentiments, sheet);
       
       closeCreatedFile(workbook, outputPath);
    }
@@ -58,12 +58,12 @@ public class ExcelTools{
     * @param data
     * @param sheet 
     */
-   private static void makeOutputRows(String[] data, Sheet sheet) {
+   private static void makeOutputRows(Sentiment[] data, Sheet sheet) {
       for (int i = 1; i <= data.length; i++) {
          Row row        = sheet.createRow(i);
          int rCellCount = 0;
          row.createCell(rCellCount++).setCellValue(i);
-         row.createCell(rCellCount++).setCellValue(data[i-1]);
+         row.createCell(rCellCount++).setCellValue(data[i-1].toString());
       }      
    }
    

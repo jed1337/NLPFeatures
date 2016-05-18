@@ -9,7 +9,7 @@ public class PreprocessSO_CAL extends Preprocess {
    private final String WEIGHT_PATH = "src\\weights\\";
    private final String TAGGER_PATH = "src\\tagger\\filipino.tagger";
    private final String SPACE = " ";
-   private final String[] articleSentiments;
+   private final Sentiment[] articleSentiments;
    private final MaxentTagger tagger;
 
    private ArrayList<Weight> weights;
@@ -19,7 +19,7 @@ public class PreprocessSO_CAL extends Preprocess {
       initializeWeights();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
-      this.articleSentiments = new String[data.length];
+      this.articleSentiments = new Sentiment[data.length];
       
       Worker[] workers = initializeWorkerThreads(threadCount);
       startWorkers(workers);
@@ -119,13 +119,13 @@ public class PreprocessSO_CAL extends Preprocess {
     * @param index 
     */
    private void classifyArticle(int articleWeight, int index) {
-      String sentiment;
+      Sentiment sentiment;
       if (articleWeight > 0) {
-         sentiment = "Positive";
+         sentiment = Sentiment.POSITIVE;
       } else if (articleWeight < 0) {
-         sentiment = "Negative";
+         sentiment = Sentiment.NEGATIVE;
       } else {
-         sentiment = "Neutral";
+         sentiment = Sentiment.NEUTRAL;
       }
       System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
       this.articleSentiments[index] = sentiment;
