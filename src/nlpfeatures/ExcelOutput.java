@@ -97,13 +97,13 @@ public class ExcelOutput{
     * @throws FileNotFoundException If the file does not exist
     * @throws IOException 
     */
-   public static Iterator<Row> getRowIterator(String inputPath) throws FileNotFoundException, IOException {
+   public static XSSFSheet getSheet(String inputPath) throws FileNotFoundException, IOException {
       FileInputStream file = new FileInputStream(new File(inputPath));
       //Get the workbook instance for XLS file
       XSSFWorkbook workbook = new XSSFWorkbook(file);
       //Get first sheet from the workbook
       XSSFSheet sheet = workbook.getSheetAt(0);
       
-      return sheet.iterator();
+      return sheet;
    }
 }

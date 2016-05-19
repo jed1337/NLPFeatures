@@ -9,7 +9,7 @@ public class PreprocessSO_CAL extends Preprocess {
    private final String WEIGHT_PATH = "src\\weights\\";
    private final String TAGGER_PATH = "src\\tagger\\filipino.tagger";
    private final String SPACE = " ";
-   private final Sentiment[] articleSentiments;
+   private final Sentiment[] predictedSentiments;
    private final MaxentTagger tagger;
 
    private ArrayList<Weight> weights;
@@ -19,13 +19,73 @@ public class PreprocessSO_CAL extends Preprocess {
       initializeWeights();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
-      this.articleSentiments = new Sentiment[articles.size()];
+      this.predictedSentiments = new Sentiment[articles.size()];
       
       Worker[] workers = initializeWorkerThreads(threadCount);
       startWorkers(workers);
       
-      System.out.println(Arrays.toString(this.articleSentiments));
+      System.out.println(Arrays.toString(this.predictedSentiments));
+      
+      getFundamentalNumbers();
    }
+   
+//<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
+   private void getFundamentalNumbers(){
+      for(Sentiment sentiment: Sentiment.values()){
+         // int tp, np, fp, fn;
+         System.out.println("=========="+sentiment+"==========");
+         System.out.println("Precision : " + getPrecision(sentiment));
+         System.out.println("Recall    : " + getRecall(sentiment));
+         System.out.println("F-Score   : " + getFScore(sentiment));
+      }
+   }
+   public double getPrecision(Sentiment sentiment) {
+      double tp = 0.0;
+      double predictCount = 0.0;
+      
+      for (int i = 0; i < this.articles.size(); i++) {
+         Sentiment actualSentiment    = this.articles.get(i).getSentiment();
+         Sentiment predictedSentiment = this.predictedSentiments[i];
+         
+         if (predictedSentiment == sentiment) {
+            predictCount++;
+            if (actualSentiment == predictedSentiment) {
+               tp++;
+            }
+         }
+      }
+      System.out.println("\tTP: " + tp);
+      System.out.println("\tClassified: " + predictCount);
+      return tp / predictCount;
+   }
+   
+   public double getRecall(Sentiment sentiment) {
+      double tp = 0.0;
+      double actualCount = 0.0;
+      
+      for (int i = 0; i < this.articles.size(); i++) {
+         Sentiment actualSentiment    = this.articles.get(i).getSentiment();
+         Sentiment predictedSentiment = this.predictedSentiments[i];
+         
+         if (actualSentiment == sentiment) {
+            actualCount++;
+            if (actualSentiment == predictedSentiment) {
+               tp++;
+            }
+         }
+      }
+      System.out.println("\tTP: " + tp);
+      System.out.println("\tActual: " + actualCount);
+      return tp / actualCount;
+   }
+   
+   public double getFScore(Sentiment sentiment) {
+      double p = getPrecision(sentiment);
+      double r = getRecall(sentiment);
+      
+      return (2 * p * r) / (p + r);
+   }
+//</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Worker Thread Functions">
    /**
@@ -75,7 +135,7 @@ public class PreprocessSO_CAL extends Preprocess {
          }
       }
    }
-   
+
    private class Worker extends Thread{
       private final int start;
       private final int end;
@@ -88,7 +148,6 @@ public class PreprocessSO_CAL extends Preprocess {
       @Override
       public void run() {
          for(int i=start; i<end; i++){
-            System.out.println("i = " + i);
             int articleWeight = getArticleWeight(i);
             classifyArticle(articleWeight, i);
          }
@@ -128,7 +187,7 @@ public class PreprocessSO_CAL extends Preprocess {
          sentiment = Sentiment.NEUTRAL;
       }
       System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
-      this.articleSentiments[index] = sentiment;
+      this.predictedSentiments[index] = sentiment;
    }
    
    /**
@@ -180,7 +239,7 @@ public class PreprocessSO_CAL extends Preprocess {
    @Override
    protected void output(float outputs, boolean isExcel) throws IOException {
       if (isExcel) {
-         ExcelOutput.output(this.articleSentiments, outputPath+"SO_CAL.xlsx");
+         ExcelOutput.output(this.predictedSentiments, outputPath+"SO_CAL.xlsx");
       } else {
          System.err.println("CSV Not supported yet");
       }

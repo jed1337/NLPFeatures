@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +22,6 @@ public abstract class Preprocess implements FormatString{
    private final ArrayList<String> stopwords = new ArrayList<>();
    
    protected String outputPath;
-//   protected String[][] articles;
    protected ArrayList<Article> articles;
 
    protected Preprocess(Path path, boolean preprocessArticle) {
@@ -88,11 +88,7 @@ public abstract class Preprocess implements FormatString{
     * @throws IOException 
     */
    private void setArticles(String inputPath, boolean preprocessArticle) throws FileNotFoundException, IOException {
-      //Iterate through each rows from first sheet
-      Iterator<Row> rowIterator = ExcelOutput.getRowIterator(inputPath);
-      
-      while (rowIterator.hasNext()) {
-         Row row = rowIterator.next();
+      for (Row row : ExcelOutput.getSheet(inputPath)) {
          Iterator<Cell> cellIterator = row.cellIterator();
          
          try{
@@ -103,26 +99,16 @@ public abstract class Preprocess implements FormatString{
                String[] words;
                if(preprocessArticle)
                   words = preprocessArticle(contents);
-//                  tempList.add(preprocessArticle(contents));
                else
                   words = contents.split("\\s+");
-//                  this.articles.add(new Article(contents.split("\\s+"), sentiment));
-//                  tempList.add(contents.split("\\s+"));
                this.articles.add(new Article(words, sentiment));
             }
          }catch(InputMismatchException e){
-            System.out.println("eow");
-//            printErrors(e);
-//            rowIterator.next();
+            printErrors(e);
+         }catch(NoSuchElementException e){
+            System.out.println("Empty cell (Use delete row)");
          }
       }
-      
-//      int size       = tempList.size();
-//      this.articles = new String[size][];
-//      int i = 0;
-//      for (String[] articleStringArray : tempList) {
-//         this.articles[i++] = articleStringArray;
-//      }
    }
 //</editor-fold>
    

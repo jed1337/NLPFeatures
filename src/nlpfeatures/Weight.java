@@ -19,19 +19,14 @@ public final class Weight implements FormatString {
    private void setWeights(String inputPath) throws IOException {
       this.weights = new HashMap<>();
 
-      // Get the workbook instance for XLS file
-      Iterator<Row> rowIterator = ExcelOutput.getRowIterator(inputPath);
-      while (rowIterator.hasNext()) {
-         Row row = rowIterator.next();
+      for(Row row : ExcelOutput.getSheet(inputPath)){
          Iterator<Cell> cellIterator = row.cellIterator();
-
          try {
             String word = format(cellIterator.next().getStringCellValue());
             int value   = (int) cellIterator.next().getNumericCellValue();
             this.weights.put(word, value);
          } catch (IllegalStateException e) {
             System.err.println(e);
-            rowIterator.next();
          }
       }
    }
