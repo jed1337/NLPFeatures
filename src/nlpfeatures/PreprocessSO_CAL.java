@@ -26,11 +26,15 @@ public class PreprocessSO_CAL extends Preprocess {
       
       System.out.println(Arrays.toString(this.predictedSentiments));
       
-      getFundamentalNumbers();
+      for(Sentiment sen: Sentiment.values()){
+         getFundamentalNumbers(sen);
+      }
+      getFundamentalNumbers(null);
    }
    
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
-   private void getFundamentalNumbers(){
+   private void getFundamentalNumbers(Sentiment filter){
+      System.out.println("\nAll "+filter);
       for(Sentiment sen: Sentiment.values()){
          float tp = 0.0f; //True  positive
          float tn = 0.0f; //True  negative
@@ -40,6 +44,10 @@ public class PreprocessSO_CAL extends Preprocess {
          for (int i = 0; i < this.articles.size(); i++) {
             Sentiment trueSen = this.articles.get(i).getSentiment(); //Actual Sentiment
             Sentiment predSen = this.predictedSentiments[i];         //Predicted Sentiment
+            
+            if(filter != null && trueSen!=filter){
+               continue;
+            }
             
             if(trueSen == sen && predSen == sen){
                tp++;
@@ -61,10 +69,10 @@ public class PreprocessSO_CAL extends Preprocess {
          float acc = (tp+fn)/(tp+fp+tn+fn); //Accuracy
          
          System.out.println("=========="+sen+"==========");
-         System.out.println("Precision : " + p);
-         System.out.println("Recall    : " + r);
-         System.out.println("F-Score   : " + fs);
          System.out.println("Accuracy  : " + acc);
+         System.out.println("Precision : " + p);
+         System.out.println("F-Score   : " + fs);
+         System.out.println("Recall    : " + r);
       }
    }
 //</editor-fold>

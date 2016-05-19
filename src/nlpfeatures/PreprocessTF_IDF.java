@@ -2,7 +2,6 @@ package nlpfeatures;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,47 +49,38 @@ public class PreprocessTF_IDF extends Preprocess {
 
       //Remove the "-" from words Ex: "-anyos" -> "anyos", "--frj" -> "frj"
       //Remove the words which begin in "-"
-      HashMap<String, Float> temp = new HashMap<>();
-      corpusWords.entrySet().stream()
-              .filter(entry->entry.getKey().startsWith("-"))
-              .forEach((entry)->{
-                 temp.put(entry.getKey(), entry.getValue());
-              });
-      corpusWords.keySet().removeAll(temp.keySet());
+      Map<String, Float> temp = corpusWords.entrySet().stream()
+         .filter(entry->entry.getKey().startsWith("-"))
+         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      
+      corpusWords.entrySet().removeAll(temp.entrySet());
 
       //Place the words without their "-"
-      temp.entrySet().stream()
-              .forEach((entry)->{
-                 String key = entry.getKey();
-                 while (key.startsWith("-")) {
-                    key = key.substring(1);
-                 }
-                 corpusWords.put(key, entry.getValue());
-              });
+      temp.entrySet().forEach((entry)->{
+         String key = entry.getKey();
+         while (key.startsWith("-")) {
+            key = key.substring(1);
+         }
+         corpusWords.put(key, entry.getValue());
+      });
    }   
 
    private Set<String> removeLowPercentageWords(float percentage) {
       int cutoff = (int) Math.floor(corpusWords.size() * percentage / 100);
-      float valCutoff;
-
-      List<Float> values = corpusWords.entrySet().stream()
-         .sorted(Map.Entry.comparingByValue()) //Sort by value
-         .map(Map.Entry::getValue)             //Reference only the map's values
-         .collect(Collectors.toList());        //Return only the values
-
-      float temp = Float.MAX_VALUE;
-      for (int i = 0; i < values.size(); i++) {
-         if (i == cutoff) {
-            temp = values.get(i);   //Change temp to be the value at cutoff
-            break;
-         }
-      }                             //Because only final variables can
-      valCutoff = temp;               //be used in Lambda
-
-      //Create a tempMap so that the original corpus can be reused
+      
       HashMap<String, Float> tempMap = new HashMap<>(corpusWords);
-      tempMap.values().removeIf(v->v < valCutoff);  //Remove low percentage entries
-
+      
+      int[] idx = {0};
+      corpusWords.entrySet().stream()
+         .sorted(Map.Entry.comparingByValue())
+         .forEach(e ->{
+            if(idx[0] == cutoff){
+               tempMap.values().removeIf(v->v < e.getValue());  //Remove low percentage entries
+            }
+            idx[0]++;
+         }
+      );
+      
       return tempMap.keySet();
    }
 //</editor-fold>
@@ -111,7 +101,7 @@ public class PreprocessTF_IDF extends Preprocess {
          for (int j = 0; j < articleCount; j++) {
             value += calculator.tfIdf(j);
          }
-         corpusWords.put(key, value);
+         this.corpusWords.put(key, value);
       }
    }
 }
