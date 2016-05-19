@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public class PreprocessTF_IDF extends Preprocess {
    private HashMap<String, Float> corpusWords;
 
-   public PreprocessTF_IDF(Path path, String stopwordsPath) {
+   public PreprocessTF_IDF(Path path) {
       super(path, true);
       
       setCorpusWords();

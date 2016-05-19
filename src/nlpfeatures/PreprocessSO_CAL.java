@@ -31,59 +31,41 @@ public class PreprocessSO_CAL extends Preprocess {
    
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
    private void getFundamentalNumbers(){
-      for(Sentiment sentiment: Sentiment.values()){
-         // int tp, np, fp, fn;
-         System.out.println("=========="+sentiment+"==========");
-         System.out.println("Precision : " + getPrecision(sentiment));
-         System.out.println("Recall    : " + getRecall(sentiment));
-         System.out.println("F-Score   : " + getFScore(sentiment));
-      }
-   }
-   public double getPrecision(Sentiment sentiment) {
-      double tp = 0.0;
-      double predictCount = 0.0;
-      
-      for (int i = 0; i < this.articles.size(); i++) {
-         Sentiment actualSentiment    = this.articles.get(i).getSentiment();
-         Sentiment predictedSentiment = this.predictedSentiments[i];
+      for(Sentiment sen: Sentiment.values()){
+         float tp = 0.0f; //True  positive
+         float tn = 0.0f; //True  negative
+         float fp = 0.0f; //False positive
+         float fn = 0.0f; //False negative
          
-         if (predictedSentiment == sentiment) {
-            predictCount++;
-            if (actualSentiment == predictedSentiment) {
+         for (int i = 0; i < this.articles.size(); i++) {
+            Sentiment trueSen = this.articles.get(i).getSentiment(); //Actual Sentiment
+            Sentiment predSen = this.predictedSentiments[i];         //Predicted Sentiment
+            
+            if(trueSen == sen && predSen == sen){
                tp++;
             }
-         }
-      }
-      System.out.println("\tTP: " + tp);
-      System.out.println("\tClassified: " + predictCount);
-      return tp / predictCount;
-   }
-   
-   public double getRecall(Sentiment sentiment) {
-      double tp = 0.0;
-      double actualCount = 0.0;
-      
-      for (int i = 0; i < this.articles.size(); i++) {
-         Sentiment actualSentiment    = this.articles.get(i).getSentiment();
-         Sentiment predictedSentiment = this.predictedSentiments[i];
-         
-         if (actualSentiment == sentiment) {
-            actualCount++;
-            if (actualSentiment == predictedSentiment) {
-               tp++;
+            else if(trueSen != sen && predSen != sen){
+               tn++;
+            }
+            else if(trueSen == sen && predSen != sen){
+               fn++;
+            }
+            else if(trueSen != sen && predSen == sen){
+               fp++;
             }
          }
+
+         float p   = tp/(tp+fp);            //Precision
+         float r   = tp/(tp+fn);            //Recall
+         float fs  = (2*p*r)/(p+r);         //F-score
+         float acc = (tp+fn)/(tp+fp+tn+fn); //Accuracy
+         
+         System.out.println("=========="+sen+"==========");
+         System.out.println("Precision : " + p);
+         System.out.println("Recall    : " + r);
+         System.out.println("F-Score   : " + fs);
+         System.out.println("Accuracy  : " + acc);
       }
-      System.out.println("\tTP: " + tp);
-      System.out.println("\tActual: " + actualCount);
-      return tp / actualCount;
-   }
-   
-   public double getFScore(Sentiment sentiment) {
-      double p = getPrecision(sentiment);
-      double r = getRecall(sentiment);
-      
-      return (2 * p * r) / (p + r);
    }
 //</editor-fold>
    
