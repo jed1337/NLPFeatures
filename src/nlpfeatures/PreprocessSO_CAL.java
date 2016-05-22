@@ -26,15 +26,11 @@ public class PreprocessSO_CAL extends Preprocess {
       
       System.out.println(Arrays.toString(this.predictedSentiments));
       
-      for(Sentiment sen: Sentiment.values()){
-         getFundamentalNumbers(sen);
-      }
-      getFundamentalNumbers(null);
+      getFundamentalNumbers();
    }
    
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
-   private void getFundamentalNumbers(Sentiment filter){
-      System.out.println("\nAll "+filter);
+   private void getFundamentalNumbers(){
       for(Sentiment sen: Sentiment.values()){
          float tp = 0.0f; //True  positive
          float tn = 0.0f; //True  negative
@@ -44,10 +40,6 @@ public class PreprocessSO_CAL extends Preprocess {
          for (int i = 0; i < this.articles.size(); i++) {
             Sentiment trueSen = this.articles.get(i).getSentiment(); //Actual Sentiment
             Sentiment predSen = this.predictedSentiments[i];         //Predicted Sentiment
-            
-            if(filter != null && trueSen!=filter){
-               continue;
-            }
             
             if(trueSen == sen && predSen == sen){
                tp++;

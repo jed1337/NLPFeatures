@@ -1,6 +1,7 @@
 package nlpfeatures;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -118,7 +119,21 @@ public abstract class Preprocess implements FormatString{
 
    protected abstract void output(float outputs, boolean isExcel) throws IOException;   
 //</editor-fold>
-
+   
+//<editor-fold defaultstate="collapsed" desc="Utility Functions">
+   protected void printErrors(Exception ex) {
+      System.err.println(ex.getMessage());
+   }
+   
+   protected void closeSafely(Closeable c){
+      try{
+         c.close();
+      } catch (IOException e) {
+         printErrors(e);
+      }
+   }
+//</editor-fold>
+   
    /**
     * Returns the words in the article
     * @param article
@@ -137,11 +152,7 @@ public abstract class Preprocess implements FormatString{
    protected void removeStopWords(Collection collection) {
       collection.removeAll(stopwords);
    }
-   
-   protected void printErrors(Exception ex) {
-      System.err.println(ex.getMessage());
-   }
-   
+
    @Override
    public String format(String word) {
       return word.toLowerCase().trim();

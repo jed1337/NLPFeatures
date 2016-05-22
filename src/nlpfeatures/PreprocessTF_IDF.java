@@ -1,9 +1,11 @@
 package nlpfeatures;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PreprocessTF_IDF extends Preprocess {
@@ -15,6 +17,8 @@ public class PreprocessTF_IDF extends Preprocess {
       setCorpusWords();
       removeStopWords(corpusWords.keySet());
       removeInvalidWords(corpusWords);
+      
+      corpusWords.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(System.out::println);
    }
 
 //<editor-fold defaultstate="collapsed" desc="TF IDF Outputs">
@@ -23,21 +27,34 @@ public class PreprocessTF_IDF extends Preprocess {
       output(outputs, true);
    }
    
-   public void csvOutput(float outputs) throws IOException {
-      output(outputs, false);
-   }
+//   public void csvOutput(float outputs) throws IOException {
+//      output(outputs, false);
+//   }
    
    @Override
    public void output(float outputs, boolean isExcel) throws IOException {
       for (float i = 0; i < outputs; i++) {
          float percentage = (float) Math.floor(1.0 * (i / outputs) * 100);
-         Set<String> keys = removeLowPercentageWords(percentage);
          
-         if (isExcel) {
-            ExcelOutput.output(articles, keys, outputPath + percentage + "%.xlsx");
-         } else {
-            CSVOutput.output(articles, keys, outputPath + percentage + "%.csv");
+         try{
+            FileOutputStream fos = new FileOutputStream(outputPath+"BagOfWords "+percentage);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            ArrayList<String> temp = new ArrayList<>();
+            temp.addAll(removeLowPercentageWords(percentage).keySet());
+            oos.writeObject(temp);
+            
+            closeSafely(oos);
+            closeSafely(fos);
+         } catch(IOException ie){
+            printErrors(ie);
          }
+         
+//         if (isExcel) {
+//            ExcelOutput.output(articles, keys, outputPath + percentage + "%.xlsx");
+//         } else {
+//            CSVOutput.output(articles, keys, outputPath + percentage + "%.csv");
+//         }
+         
       }
    }
 //</editor-fold>
@@ -65,7 +82,7 @@ public class PreprocessTF_IDF extends Preprocess {
       });
    }   
 
-   private Set<String> removeLowPercentageWords(float percentage) {
+   private HashMap<String, Float> removeLowPercentageWords(float percentage) {
       int cutoff = (int) Math.floor(corpusWords.size() * percentage / 100);
       
       HashMap<String, Float> tempMap = new HashMap<>(corpusWords);
@@ -81,7 +98,7 @@ public class PreprocessTF_IDF extends Preprocess {
          }
       );
       
-      return tempMap.keySet();
+      return tempMap;
    }
 //</editor-fold>
 
