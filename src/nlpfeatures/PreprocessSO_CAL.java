@@ -214,17 +214,8 @@ public class PreprocessSO_CAL extends Preprocess {
 //<editor-fold defaultstate="collapsed" desc="SO_CAL Outputs">
    
    @Override
-   public void excelOutput(float outputs) throws IOException {
-      output(outputs, true);
-   }
-   
-   @Override
-   protected void output(float outputs, boolean isExcel) throws IOException {
-      if (isExcel) {
-         ExcelOutput.output(this.predictedSentiments, outputPath+"SO_CAL.xlsx");
-      } else {
-         System.err.println("CSV Not supported yet");
-      }
+   public void output(float outputs) throws IOException {
+      ExcelOutput.output(this.predictedSentiments, outputPath+"SO_CAL.xlsx");
    }
 //</editor-fold>
    
@@ -239,5 +230,10 @@ public class PreprocessSO_CAL extends Preprocess {
       } catch (IOException ex) {
          printErrors(ex);
       }
+   }
+   
+   @Override
+   protected String[] format(String article){
+      return article.split("\\s+");
    }
 }

@@ -12,7 +12,7 @@ public class NLPFeatures {
 //      Preprocess p = new PreprocessSO_CAL(path, 4);
       
       try {
-         p.output(10, true);
+         p.output(10);
       } catch (IOException ex) {
          System.err.println(ex.getMessage());
       }

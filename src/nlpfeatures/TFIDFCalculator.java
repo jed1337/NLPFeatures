@@ -2,21 +2,27 @@ package nlpfeatures;
 
 import java.util.ArrayList;
 
-public final class TFIDFCorpus {
+public final class TFIDFCalculator {
    private final ArrayList<Article> articles;
    private double dIdf;
    private String key;
    
-   private static TFIDFCorpus singleton = null;
+   private static TFIDFCalculator singleton = null;
 
-   private TFIDFCorpus(ArrayList<Article> articles) {
+   private TFIDFCalculator(ArrayList<Article> articles) {
       this.articles = articles;
       this.key = null;
    }
    
-   public static TFIDFCorpus getSingleton(ArrayList<Article> articles){
+   /**
+    * Is a singleton since only 1 set of articles is used.
+    * Doing this avoids unnecessary initializations
+    * @param articles
+    * @return 
+    */
+   public static TFIDFCalculator getSingleton(ArrayList<Article> articles){
       if(singleton == null){
-         singleton = new TFIDFCorpus(articles);
+         singleton = new TFIDFCalculator(articles);
       }
       singleton.key = null;
       return singleton;

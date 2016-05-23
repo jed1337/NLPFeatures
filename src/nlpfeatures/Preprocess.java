@@ -18,8 +18,8 @@ import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
-public abstract class Preprocess implements FormatString{
-   private final String REGEX_WHITE_LIST     = "[^((a-zA-Z'Ññ\"’\\s-)|([\\r\\n\\t]))]+";
+public abstract class Preprocess{
+   protected final String REGEX_WHITE_LIST   = "[^((a-zA-Z'Ññ\"’\\s-)|([\\r\\n\\t]))]+";
    private final ArrayList<String> stopwords = new ArrayList<>();
    
    protected String outputPath;
@@ -97,11 +97,11 @@ public abstract class Preprocess implements FormatString{
             Sentiment sentiment = Sentiment.getSentiment(cellIterator.next().getStringCellValue());
 
             if (!contents.isEmpty()) {
-               String[] words;
-               if(preprocessArticle)
-                  words = preprocessArticle(contents);
-               else
-                  words = contents.split("\\s+");
+               String[] words = format(contents);
+//               if(preprocessArticle)
+//                  words = preprocessArticle(contents);
+//               else
+//                  words = contents.split("\\s+");
                this.articles.add(new Article(words, sentiment));
             }
          }catch(InputMismatchException e){
@@ -114,10 +114,7 @@ public abstract class Preprocess implements FormatString{
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Outputs">
-//   public abstract void csvOutput(float outputs) throws IOException;
-   public abstract void excelOutput(float outputs) throws IOException;
-
-   protected abstract void output(float outputs, boolean isExcel) throws IOException;   
+   public abstract void output(float outputs) throws IOException;   
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Utility Functions">
@@ -134,17 +131,7 @@ public abstract class Preprocess implements FormatString{
    }
 //</editor-fold>
    
-   /**
-    * Returns the words in the article
-    * @param article
-    * @return 
-    */
-   private String[] preprocessArticle(String article) {
-      return article.toLowerCase()
-         .replaceAll(REGEX_WHITE_LIST, " ")
-         .split("\\s+");
-   }
-   
+
    /**
     * Removes the stopwords from the given collection
     * @param collection 
@@ -153,8 +140,10 @@ public abstract class Preprocess implements FormatString{
       collection.removeAll(stopwords);
    }
 
-   @Override
-   public String format(String word) {
-      return word.toLowerCase().trim();
-   }
+   protected abstract String[] format(String article);
+   
+//   @Override
+//   public String format(String word) {
+//      return word.toLowerCase().trim();
+//   }
 }

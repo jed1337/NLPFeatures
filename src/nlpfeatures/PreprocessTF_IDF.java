@@ -23,21 +23,12 @@ public class PreprocessTF_IDF extends Preprocess {
 
 //<editor-fold defaultstate="collapsed" desc="TF IDF Outputs">
    @Override
-   public void excelOutput(float outputs) throws IOException {
-      output(outputs, true);
-   }
-   
-//   public void csvOutput(float outputs) throws IOException {
-//      output(outputs, false);
-//   }
-   
-   @Override
-   public void output(float outputs, boolean isExcel) throws IOException {
+   public void output(float outputs) throws IOException {
       for (float i = 0; i < outputs; i++) {
          float percentage = (float) Math.floor(1.0 * (i / outputs) * 100);
          
          try{
-            FileOutputStream fos = new FileOutputStream(outputPath+"BagOfWords "+percentage);
+            FileOutputStream fos   = new FileOutputStream(outputPath+"BagOfWords "+percentage);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             ArrayList<String> temp = new ArrayList<>();
             temp.addAll(removeLowPercentageWords(percentage).keySet());
@@ -48,24 +39,22 @@ public class PreprocessTF_IDF extends Preprocess {
          } catch(IOException ie){
             printErrors(ie);
          }
-         
-//         if (isExcel) {
-//            ExcelOutput.output(articles, keys, outputPath + percentage + "%.xlsx");
-//         } else {
-//            CSVOutput.output(articles, keys, outputPath + percentage + "%.csv");
-//         }
-         
       }
    }
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Removers">
    private void removeInvalidWords(HashMap<String, Float> corpusWords) {
-      //Remove words of length 1 except for "I"
-      corpusWords.keySet().removeIf(s->s.length() <= 1 && !s.equalsIgnoreCase("i"));
+      remove1LetterWords(corpusWords);
+      removeDash(corpusWords);
+   }
 
-      //Remove the "-" from words Ex: "-anyos" -> "anyos", "--frj" -> "frj"
-      //Remove the words which begin in "-"
+   /**
+    * Remove the "-" from words Ex: "-anyos" -> "anyos", "--frj" -> "frj"
+    * Remove the words which begin in "-"
+    * @param corpusWords 
+    */
+   private void removeDash(HashMap<String, Float> corpusWords){
       Map<String, Float> temp = corpusWords.entrySet().stream()
          .filter(entry->entry.getKey().startsWith("-"))
          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -80,7 +69,15 @@ public class PreprocessTF_IDF extends Preprocess {
          }
          corpusWords.put(key, entry.getValue());
       });
-   }   
+   }
+   
+   /**
+    * Remove words of length 1 except for "I"
+    * @param corpusWords 
+    */
+   private void remove1LetterWords(HashMap<String, Float> corpusWords){
+      corpusWords.keySet().removeIf(s->s.length() <= 1 && !s.equalsIgnoreCase("i"));
+   }
 
    private HashMap<String, Float> removeLowPercentageWords(float percentage) {
       int cutoff = (int) Math.floor(corpusWords.size() * percentage / 100);
@@ -102,15 +99,15 @@ public class PreprocessTF_IDF extends Preprocess {
    }
 //</editor-fold>
 
-   public HashMap<String, Float> getCorpusWords() {
-      return corpusWords;
-   }
-
+   /**
+    * Sets the corpus words
+    * Uses the TFIDF Calculator
+    */
    private void setCorpusWords() {
       this.corpusWords = new HashMap<>();
       int articleCount = this.articles.size();
 
-      TFIDFCorpus calculator = TFIDFCorpus.getSingleton(this.articles);
+      TFIDFCalculator calculator = TFIDFCalculator.getSingleton(this.articles);
       for (String key : getUniqueWords()) {
          float value  = 0;
 
@@ -120,5 +117,17 @@ public class PreprocessTF_IDF extends Preprocess {
          }
          this.corpusWords.put(key, value);
       }
+   }
+   
+   /**
+    * Returns the words in the article
+    * @param article
+    * @return 
+    */
+   @Override
+   protected String[] format(String article){
+      return article.toLowerCase()
+         .replaceAll(REGEX_WHITE_LIST, " ")
+         .split("\\s+");
    }
 }

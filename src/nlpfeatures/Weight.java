@@ -7,7 +7,7 @@ import java.util.Iterator;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
-public final class Weight implements FormatString {
+public final class Weight{
    private final char TAG;
    private HashMap<String, Integer> weights;
 
@@ -31,7 +31,6 @@ public final class Weight implements FormatString {
       }
    }
 
-   @Override
    public String format(String word) {
       return word.toLowerCase().trim();
    }
