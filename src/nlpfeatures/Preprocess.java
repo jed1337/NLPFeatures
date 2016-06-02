@@ -20,7 +20,6 @@ import org.apache.poi.ss.usermodel.Row;
 
 public abstract class Preprocess{
    protected final String REGEX_WHITE_LIST = "[^\\-a-zA-Z'Ññ\"\'’\\s]+";
-   protected final String REGEX_SYMBOLS    = "[^a-zA-ZÑñ]";
 //   |([\\r\\n\\t]))]
    private final ArrayList<String> stopwords = new ArrayList<>();
    
@@ -42,7 +41,6 @@ public abstract class Preprocess{
 //<editor-fold defaultstate="collapsed" desc="Getters">
 
    public String[] getDataAtIndex(int index) {
-//      return this.articles[index];
       return articles.get(index).getWords();
    }
    

@@ -42,26 +42,34 @@ public class PreprocessTF_IDF extends Preprocess {
    }
    
    /**
-    * Remove the invalid symbols from the start of the word
-    * Ex: "--anyos" -> "anyos", "(frj)" -> "frj"
+    * Remove the invalid symbols from the start and end of the word
+    * Ex: "--anyos" -> "anyos", "((frj))" -> "frj"
     * @param corpusWords 
     */
    private void removeInvalidSymbols(HashMap<String, Float> corpusWords){
-      Pattern pattern = Pattern.compile(REGEX_SYMBOLS);
-//      Pattern pattern = Pattern.compile("a|b|c");   //a or b or c
-   
+      final String RS = "[^a-zA-ZÑñ]"; //Regex sybols
+      
+//      Pattern pattern = Pattern.compile(REGEX_SYMBOLS);
+      Pattern pattern = Pattern.compile(
+         String.format("(%s+.*)|(.*%s+)", RS, RS));   //Starts or ends with a symbol
+      Pattern start   = Pattern.compile(RS+".*");     //Starts with a symbol
+      Pattern end     = Pattern.compile(".*"+RS);     //Ends with a symbol.
+      
+      //Temp contains words from corpusWords that start or end with a symbol
       Map<String,Float> temp = corpusWords.entrySet().stream()
-         .filter((entry)->pattern.matcher(entry.getKey()).lookingAt())
+         .filter((entry)->pattern.matcher(entry.getKey()).matches())
          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
       corpusWords.entrySet().removeAll(temp.entrySet());
 
-      //Place the words without their symbol
+      //Place the words from temp back to corpusWords without their symbol
+      //on their start or end
       temp.entrySet().forEach((entry)->{
          String key = entry.getKey();
-         int i=0;
-         while(pattern.matcher(key).lookingAt()){
+         while(start.matcher(key).matches()){
             key = key.substring(1);
+         }
+         while(end.matcher(key).matches()){
+            key = key.substring(0, key.length()-1);
          }
          corpusWords.put(key, entry.getValue());
       });
@@ -72,7 +80,7 @@ public class PreprocessTF_IDF extends Preprocess {
     * @param corpusWords 
     */
    private void remove1LetterWords(HashMap<String, Float> corpusWords){
-      corpusWords.keySet().removeIf(s->s.length() <= 1 && !s.equalsIgnoreCase("i"));
+      corpusWords.keySet().removeIf(k->k.length() <= 1 && !k.equalsIgnoreCase("i"));
    }
 
    private HashMap<String, Float> removeLowPercentageWords(float percentage) {

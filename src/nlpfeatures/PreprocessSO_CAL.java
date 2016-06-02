@@ -146,8 +146,8 @@ public class PreprocessSO_CAL extends Preprocess {
 
 //<editor-fold defaultstate="collapsed" desc="Tag Article">
    /**
-    * Tags an article and gets its weight
-    * @param index 
+    * Tags an article and returns its weight
+    * @param index Its index from ArrayList<String> article
     */
    private int getArticleWeight(int index) {
       String taggedArticle      = this.tagger.tagString(inputToString(getDataAtIndex(index)));
@@ -208,9 +208,8 @@ public class PreprocessSO_CAL extends Preprocess {
       }
       
       for (int i = 0; i < taggedWords.length; i++) {
-         if(taggedWords[i].getTag()=='J'){
-            TaggedWords taggedWord = taggedWords[i];
-
+         TaggedWords taggedWord = taggedWords[i];
+         if(taggedWord.getTag()=='J'){
             if(prefixIsAnIntensifier(taggedWord)){
                System.out.println("MATCH");
                //Manipulate weight here
@@ -223,7 +222,8 @@ public class PreprocessSO_CAL extends Preprocess {
       }
       return articleWeight;
    }
-
+   
+//<editor-fold defaultstate="collapsed" desc="Intensifier Code">
    private boolean prefixIsAnIntensifier(TaggedWords taggedWord) {
       String[] intensifiers = new String[]{"napaka", "pinaka", "masyadong", "totoong"};
       
@@ -266,6 +266,8 @@ public class PreprocessSO_CAL extends Preprocess {
       
       return false;
    }
+   
+//</editor-fold>
    
    private String inputToString(String[] toTag) {
       StringBuilder sb = new StringBuilder();
