@@ -1,7 +1,9 @@
 package nlpfeatures;
 
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -189,16 +191,80 @@ public class PreprocessSO_CAL extends Preprocess {
       }
       return taggedWords;
    }
-   
+
+   /**
+    * Todo Clean the code
+    * @param taggedWords The words in the article along with their corresponding
+    * parts of speech tag
+    * @return 
+    */
    private int getArticleWeight(TaggedWords[] taggedWords) {
       int articleWeight = 0;
       for (Weight w : weights) {
          articleWeight += Arrays.stream(taggedWords)
             .filter(tw->tw.getTag() == w.getTag()) //The Weight tag is equal to the tag of the current word
             .map(tw->w.getWordValue(tw.getWord())) //Get only the weights of each word (int)
-            .reduce(0, (acc, item)->acc + item);   //Collect all the weights, and return their total
+            .reduce(0, (acc, item) -> acc + item); //Collect all the weights, and return their total
+      }
+      
+      for (int i = 0; i < taggedWords.length; i++) {
+         if(taggedWords[i].getTag()=='J'){
+            TaggedWords taggedWord = taggedWords[i];
+
+            if(prefixIsAnIntensifier(taggedWord)){
+               System.out.println("MATCH");
+               //Manipulate weight here
+            }
+            else if(wordBeforeIsAnIntensifier(taggedWords, i)){
+               System.out.println("MATCH 2");
+               //Manipulate weight here
+            }
+         }
       }
       return articleWeight;
+   }
+
+   private boolean prefixIsAnIntensifier(TaggedWords taggedWord) {
+      String[] intensifiers = new String[]{"napaka", "pinaka", "masyadong", "totoong"};
+      
+      for (String intensifier : intensifiers) {
+         if(taggedWord.getWord().toLowerCase().startsWith(intensifier)){
+            System.out.println(taggedWord);
+            return true;
+         }
+      }
+      return false;
+   }
+   
+   private boolean wordBeforeIsAnIntensifier(TaggedWords[] tw, int curIndex){
+      String[] intPhrases = new String[]{"tunay na", "ubod ng"};
+      
+      for (String intPhrase : intPhrases) {
+         String[] intPhraseWords = intPhrase.split("\\s+");
+         
+         //Used to preven array out of bounds exceptions
+         if(curIndex-intPhraseWords.length < 0){
+            continue;
+         }
+         
+         //checks if the words preceding tw[curIndex] are found in intPhrases
+         final int ipwLen = intPhraseWords.length;
+         boolean valid = true;
+         for (int i = 0; i < ipwLen; i++) {
+            String ipw = intPhraseWords[i];
+            
+            if(!tw[curIndex+(i-ipwLen)].getWord().equals(ipw)){
+               valid = false;
+            }
+         }
+         
+         if(valid){
+            System.out.println("Valid. Thank you Allah");
+            return true;
+         }
+      }
+      
+      return false;
    }
    
    private String inputToString(String[] toTag) {
@@ -211,13 +277,22 @@ public class PreprocessSO_CAL extends Preprocess {
    }
 //</editor-fold>
    
-//<editor-fold defaultstate="collapsed" desc="SO_CAL Outputs">
-   
    @Override
    public void output(float outputs) throws IOException {
       ExcelOutput.output(this.predictedSentiments, outputPath+"SO_CAL.xlsx");
+      
+      try {
+         FileOutputStream fos      = new FileOutputStream(outputPath+"SO-CAL"+".ser");
+         ObjectOutputStream oos    = new ObjectOutputStream(fos);
+         ArrayList<Sentiment> temp = new ArrayList<>(Arrays.asList(predictedSentiments));
+         oos.writeObject(temp);
+
+         closeSafely(oos);
+         closeSafely(fos);
+      } catch (IOException ie) {
+         printErrors(ie);
+      }
    }
-//</editor-fold>
    
    private void initializeWeights() {
       try {

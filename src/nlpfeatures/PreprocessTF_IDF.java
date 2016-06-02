@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PreprocessTF_IDF extends Preprocess {
@@ -17,54 +18,49 @@ public class PreprocessTF_IDF extends Preprocess {
       setCorpusWords();
       removeStopWords(corpusWords.keySet());
       removeInvalidWords(corpusWords);
-      
-      corpusWords.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(System.out::println);
    }
 
-//<editor-fold defaultstate="collapsed" desc="TF IDF Outputs">
    @Override
-   public void output(float outputs) throws IOException {
-      for (float i = 0; i < outputs; i++) {
-         float percentage = (float) Math.floor(1.0 * (i / outputs) * 100);
-         
-         try{
-            FileOutputStream fos   = new FileOutputStream(outputPath+"BagOfWords "+percentage);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            ArrayList<String> temp = new ArrayList<>();
-            temp.addAll(removeLowPercentageWords(percentage).keySet());
-            oos.writeObject(temp);
-            
-            closeSafely(oos);
-            closeSafely(fos);
-         } catch(IOException ie){
-            printErrors(ie);
-         }
+   public void output(float percentage) throws IOException {
+      try{
+         FileOutputStream fos   = new FileOutputStream(outputPath+"BagOfWords "+percentage+".ser");
+         ObjectOutputStream oos = new ObjectOutputStream(fos);
+         ArrayList<String> temp = new ArrayList<>(removeLowPercentageWords(percentage).keySet());
+         oos.writeObject(temp);
+
+         closeSafely(oos);
+         closeSafely(fos);
+      } catch(IOException ie){
+         printErrors(ie);
       }
    }
-//</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Removers">
    private void removeInvalidWords(HashMap<String, Float> corpusWords) {
+      removeInvalidSymbols(corpusWords);
       remove1LetterWords(corpusWords);
-      removeDash(corpusWords);
    }
-
+   
    /**
-    * Remove the "-" from words Ex: "-anyos" -> "anyos", "--frj" -> "frj"
-    * Remove the words which begin in "-"
+    * Remove the invalid symbols from the start of the word
+    * Ex: "--anyos" -> "anyos", "(frj)" -> "frj"
     * @param corpusWords 
     */
-   private void removeDash(HashMap<String, Float> corpusWords){
-      Map<String, Float> temp = corpusWords.entrySet().stream()
-         .filter(entry->entry.getKey().startsWith("-"))
+   private void removeInvalidSymbols(HashMap<String, Float> corpusWords){
+      Pattern pattern = Pattern.compile(REGEX_SYMBOLS);
+//      Pattern pattern = Pattern.compile("a|b|c");   //a or b or c
+   
+      Map<String,Float> temp = corpusWords.entrySet().stream()
+         .filter((entry)->pattern.matcher(entry.getKey()).lookingAt())
          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-      
+
       corpusWords.entrySet().removeAll(temp.entrySet());
 
-      //Place the words without their "-"
+      //Place the words without their symbol
       temp.entrySet().forEach((entry)->{
          String key = entry.getKey();
-         while (key.startsWith("-")) {
+         int i=0;
+         while(pattern.matcher(key).lookingAt()){
             key = key.substring(1);
          }
          corpusWords.put(key, entry.getValue());
@@ -109,7 +105,7 @@ public class PreprocessTF_IDF extends Preprocess {
 
       TFIDFCalculator calculator = TFIDFCalculator.getSingleton(this.articles);
       for (String key : getUniqueWords()) {
-         float value  = 0;
+         float value = 0;
 
          calculator.setKey(key);
          for (int j = 0; j < articleCount; j++) {

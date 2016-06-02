@@ -19,7 +19,9 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
 public abstract class Preprocess{
-   protected final String REGEX_WHITE_LIST   = "[^((a-zA-Z'Ññ\"’\\s-)|([\\r\\n\\t]))]+";
+   protected final String REGEX_WHITE_LIST = "[^\\-a-zA-Z'Ññ\"\'’\\s]+";
+   protected final String REGEX_SYMBOLS    = "[^a-zA-ZÑñ]";
+//   |([\\r\\n\\t]))]
    private final ArrayList<String> stopwords = new ArrayList<>();
    
    protected String outputPath;
@@ -114,7 +116,7 @@ public abstract class Preprocess{
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Outputs">
-   public abstract void output(float outputs) throws IOException;   
+   public abstract void output(float outputs) throws IOException;
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Utility Functions">
@@ -129,9 +131,8 @@ public abstract class Preprocess{
          printErrors(e);
       }
    }
-//</editor-fold>
    
-
+   protected abstract String[] format(String article);
    /**
     * Removes the stopwords from the given collection
     * @param collection 
@@ -139,11 +140,5 @@ public abstract class Preprocess{
    protected void removeStopWords(Collection collection) {
       collection.removeAll(stopwords);
    }
-
-   protected abstract String[] format(String article);
-   
-//   @Override
-//   public String format(String word) {
-//      return word.toLowerCase().trim();
-//   }
+//</editor-fold>
 }
