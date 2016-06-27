@@ -7,12 +7,14 @@ public class WordBeforeIntensifier extends IntensifierMethod{
 
    @Override
    protected void addIntensifiers() {
-      intensifiers.add(new Intensifier("tunay na", 1.5f));
-      intensifiers.add(new Intensifier("ubod ng", 2.5f));
+      intensifiers.add(new Intensifier("tunay na", IntensifierType.COMPARATIVE));
+      intensifiers.add(new Intensifier("ubod ng", IntensifierType.SUPERLATIVE));
+      intensifiers.add(new Intensifier("masyadong", IntensifierType.COMPARATIVE));
+      intensifiers.add(new Intensifier("totoong", IntensifierType.COMPARATIVE));
    }
 
    @Override
-   public float override(TaggedWords[] tws, int curIndex, Weight adjWeight) {
+   public float getAdjectiveValue(TaggedWords[] tws, int curIndex, Weight adjWeight) {
       float total = 0;
       for (Intensifier intPhrase : intensifiers) {
          String[] intPhraseWords = intPhrase.getIntensifier().split("\\s+");

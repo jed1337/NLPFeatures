@@ -22,8 +22,9 @@ public class PreprocessSO_CAL extends Preprocess {
    private ArrayList<Weight> weights;
    private ArrayList<IntensifierMethod> intensifiers;
 
-   public PreprocessSO_CAL(Path path, int threadCount) {
-      super(path, false);
+   public PreprocessSO_CAL(Path path, int threadCount, int ngCount) {
+      super(path, ngCount);
+      
       initializeWeights();
       initializeIntensifiers();
 
@@ -36,6 +37,10 @@ public class PreprocessSO_CAL extends Preprocess {
       System.out.println(Arrays.toString(this.predictedSentiments));
       
       getFundamentalNumbers();
+   }
+   
+   public PreprocessSO_CAL(Path path, int threadCount){
+      this(path, threadCount, 1);
    }
    
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
@@ -222,7 +227,6 @@ public class PreprocessSO_CAL extends Preprocess {
       return articleWeight;
    }
 
-   
    private String inputToString(String[] toTag) {
       StringBuilder sb = new StringBuilder();
       for (String s : toTag) {
@@ -245,66 +249,16 @@ public class PreprocessSO_CAL extends Preprocess {
          
       float total = 0;
       for(IntensifierMethod intensifier : intensifiers){
-         total += intensifier.doSomething(taggedWords, adjWeight.get());
+         total += intensifier.ifAdjective(taggedWords, adjWeight.get());
       }
-      if(total!= 0){
+      
+      if(total != 0){
          System.out.println("total = " + total);
       }
       return total;
-      
-//      for (int i = 0; i < taggedWords.length; i++) {
-//         
-//         TaggedWords taggedWord = taggedWords[i];
-//         if(taggedWord.getTag()=='J'){
-//            prefixIsAnIntensifier(taggedWord);
-//            System.out.println("MATCH");
-//            //Manipulate weight here
-//            wordBeforeIsAnIntensifier(taggedWords, i);
-//            System.out.println("MATCH 2");
-//            //Manipulate weight here
-//         }
-//      }
    }
-
-//   private void prefixIsAnIntensifier(TaggedWords taggedWord) {
-//      String[] intensifiers = new String[]{"napaka", "pinaka", "masyadong", "totoong"};
-//      
-//      for (String intensifier : intensifiers) {
-//         if(taggedWord.getWord().toLowerCase().startsWith(intensifier)){
-//            System.out.println(taggedWord);
-//         }
-//      }
-//   }
-//   
-//   private void wordBeforeIsAnIntensifier(TaggedWords[] tw, int curIndex){
-//      String[] intPhrases = new String[]{"tunay na", "ubod ng"};
-//      
-//      for (String intPhrase : intPhrases) {
-//         String[] intPhraseWords = intPhrase.split("\\s+");
-//         
-//         //Used to preven array out of bounds exceptions
-//         if(curIndex-intPhraseWords.length < 0){
-//            continue;
-//         }
-//         
-//         //checks if the words preceding tw[curIndex] are found in intPhrases
-//         final int ipwLen = intPhraseWords.length;
-//         boolean valid = true;
-//         for (int i = 0; i < ipwLen; i++) {
-//            String ipw = intPhraseWords[i];
-//            
-//            if(!tw[curIndex+(i-ipwLen)].getWord().equals(ipw)){
-//               valid = false;
-//            }
-//         }
-//
-//         if(valid){
-//            System.out.println("Valid. Thank you Allah");
-//         }
-//      }
-//   }
-   
 //</editor-fold>
+   
 //<editor-fold defaultstate="collapsed" desc="Initializers">
    
    private void initializeWeights() {
@@ -327,23 +281,31 @@ public class PreprocessSO_CAL extends Preprocess {
    }
    
 //</editor-fold>
+
+//<editor-fold defaultstate="collapsed" desc="Outputs">
    @Override
    public void output(float outputs) throws IOException {
-      ExcelOutput.output(this.predictedSentiments, outputPath+"SO_CAL.xlsx");
+      output(outputs, "SO-CAL");
+   }
+   
+   @Override
+   public void output(float outputs, String name) throws IOException {
+      String fileName = String.format("%s%s", outputPath, name);
+      ExcelOutput.output(this.predictedSentiments, fileName+".xlsx");
       
       try {
-         FileOutputStream fos      = new FileOutputStream(outputPath+"SO-CAL"+".ser");
+         FileOutputStream fos      = new FileOutputStream(fileName+".ser");
          ObjectOutputStream oos    = new ObjectOutputStream(fos);
          ArrayList<Sentiment> temp = new ArrayList<>(Arrays.asList(predictedSentiments));
          oos.writeObject(temp);
-
+         
          closeSafely(oos);
          closeSafely(fos);
       } catch (IOException ie) {
          printErrors(ie);
       }
    }
-   
+//</editor-fold>
    
    @Override
    protected String[] format(String article){

@@ -6,10 +6,8 @@ import nlpfeatures.Weight;
 public class PrefixIntensifier extends IntensifierMethod{
    @Override
    protected void addIntensifiers() {
-      intensifiers.add(new Intensifier("napaka", 1.5f));
-      intensifiers.add(new Intensifier("pinaka", 2.5f));
-      intensifiers.add(new Intensifier("masyadong", -1.5f));
-      intensifiers.add(new Intensifier("totoong", 3.5f));
+      intensifiers.add(new Intensifier("napaka", IntensifierType.SUPERLATIVE));
+      intensifiers.add(new Intensifier("pinaka", IntensifierType.SUPERLATIVE));
    }
    
    private boolean startsWith(TaggedWords tw, Intensifier in){
@@ -17,7 +15,7 @@ public class PrefixIntensifier extends IntensifierMethod{
    }
    
    @Override
-   public float override(TaggedWords[] tws, int curIndex, Weight adjWeight) {
+   public float getAdjectiveValue(TaggedWords[] tws, int curIndex, Weight adjWeight) {
       TaggedWords tw = tws[curIndex];
       
       float total = 0;

@@ -7,25 +7,9 @@ public final class TFIDFCalculator {
    private double dIdf;
    private String key;
    
-   private static TFIDFCalculator singleton = null;
-
-   private TFIDFCalculator(ArrayList<Article> articles) {
+   public TFIDFCalculator(ArrayList<Article> articles) {
       this.articles = articles;
       this.key = null;
-   }
-   
-   /**
-    * Is a singleton since only 1 set of articles is used.
-    * Doing this avoids unnecessary initializations
-    * @param articles
-    * @return 
-    */
-   public static TFIDFCalculator getSingleton(ArrayList<Article> articles){
-      if(singleton == null){
-         singleton = new TFIDFCalculator(articles);
-      }
-      singleton.key = null;
-      return singleton;
    }
 
    public void setKey(String key) {
