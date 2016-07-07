@@ -1,44 +1,74 @@
 package nlpfeatures.Intensifiers;
 
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 import nlpfeatures.TaggedWords;
 import nlpfeatures.Weight;
 
 public abstract class IntensifierMethod {
-   protected ArrayList<Intensifier> intensifiers;
+   protected ArrayList<Intensifier> intPhrases;
+   protected Pattern validTags;
    
    public IntensifierMethod(){
-      intensifiers = new ArrayList<>();
+      intPhrases = new ArrayList<>();
       addIntensifiers();
+      setValidTags();
    }
 
+   protected abstract void setValidTags();
    protected abstract void addIntensifiers();
+      
+   /**
+    * Intensifies an adjective
+    * @param tws
+    * @param curIndex 
+    * @param weights 
+    * @return  
+    */
+   public abstract float getIntensifierVal(TaggedWords[] tws, int curIndex, ArrayList<Weight> weights);
    
-   public int ifAdjective(TaggedWords[] tws, Weight adjWeight){
+   public int addIntensification(TaggedWords[] tws, ArrayList<Weight> weights){
       int total = 0;
       for (int i = 0; i < tws.length; i++) {
          TaggedWords tw = tws[i];
-         if(tw.getTag()=='J'){   //Adjective
-            total += getAdjectiveValue(tws, i, adjWeight);
+//         if(tw.getTag()=='J'){   //Adjective
+         if(validTags.matcher(String.valueOf(tw.getTag())).matches()){
+            System.out.println("Valid tag: "+tw);
+            total += getIntensifierVal(tws, i, weights);
          }
       }
       return total;
    }
    
-   /**
-    * Todo Think of a better name
-    * Intensifies an adjective
-    * @param tws
-    * @param curIndex 
-    * @param adjWeight 
-    * @return  
-    */
-   public abstract float getAdjectiveValue(TaggedWords[] tws, int curIndex, Weight adjWeight);
+//<editor-fold defaultstate="collapsed" desc="Sub class utility tools">
    
-   //Add weight
-   protected float addWeight(Intensifier intensifier, Weight adjWeight, TaggedWords tw) {
-      return intensifier.getMultiplier() * adjWeight.getWordValue(tw.getWord());
+   /**
+    * It looks for the weight of the tagged word withe respect to its tag.
+    * It is then multiplied by the value of intensifier
+    * @param intensifier
+    * @param weights
+    * @param tw
+    * @return The weight of the intensification
+    */
+   protected float addWeight(Intensifier intensifier, ArrayList<Weight> weights, TaggedWords tw) {
+      for (Weight weight : weights) {
+         if(weight.getTag()==tw.getTag()){
+            return intensifier.getMultiplier() * weight.getWordValue(tw.getWord());
+         }
+      }
+      return 0.0f;
    }
+   
+   /**
+    * Used to prevent an array out of bounds exception
+    * @param curIndex index of the article to be checked
+    * @param intPhraseWords the words of the intensifier phrase
+    * @return true if curIndex-intPhraseWords.length < 0
+    */
+   protected boolean validBounds(int curIndex, String... intPhraseWords) {
+      return curIndex-intPhraseWords.length > 0;
+   }
+//</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Intensifier class">
    protected class Intensifier {

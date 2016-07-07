@@ -2,28 +2,28 @@ package nlpfeatures;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import nlpfeatures.ngram.Ngram;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public abstract class Preprocess{
    protected final String REGEX_WHITE_LIST = "[^\\-a-zA-Z'Ññ\"\'’\\s]+";
-   final ArrayList<String> stopwords = new ArrayList<>();
+   protected final ArrayList<String> stopwords = new ArrayList<>();
    
    protected final int ngCount;
    protected final ArrayList<Article> articles;
@@ -33,28 +33,35 @@ public abstract class Preprocess{
       this.ngCount    = ngCount;
       this.articles   = new ArrayList<>();
       this.outputPath = path.getOutputPath();
-         
+      
       try {
-         setArticles(path.getInputPath(), ngCount);
          setStopWords(path.getStopwordsPath());
-         
+         setArticles(path.getInputPath());
       } catch (IOException ex) {
          Logger.getLogger(Preprocess.class.getName()).log(Level.SEVERE, null, ex);
       }
    }
 
-//<editor-fold defaultstate="collapsed" desc="Getters">
-   public String[] getDataAtIndex(int index) {
-      return articles.get(index).getWords();
+//<editor-fold defaultstate="collapsed" desc="Protected Getters">
+   protected int getNgCount() {
+      return ngCount;
+   }
+
+   protected String[] getNgramsAt(int index) {
+      return this.articles.get(index).getWords();
    }
    
-   public String[] getUniqueWords(int index) {
+   protected String getFullArticleAt(int index){
+      return this.articles.get(index).getFullArticle();
+   }
+   
+   protected String[] getUniqueWords(int index) {
       return new HashSet<>(
-         Arrays.asList(getDataAtIndex(index)))
+         Arrays.asList(getNgramsAt(index)))
          .toArray(new String[0]);
    }
 
-   public Set<String> getUniqueWords(){
+   protected Set<String> getUniqueWords(){
       Set<String> uniqueWords = new HashSet<>();
       
       for(Article article: articles){
@@ -67,7 +74,7 @@ public abstract class Preprocess{
    }
 //</editor-fold>
    
-//<editor-fold defaultstate="collapsed" desc="Setters">
+//<editor-fold defaultstate="collapsed" desc="Private Setters">
    private void setStopWords(String stopwordsPath) throws FileNotFoundException, IOException{
       BufferedReader br = new BufferedReader(new FileReader(stopwordsPath));
       String line;
@@ -86,20 +93,22 @@ public abstract class Preprocess{
     * @throws FileNotFoundException If the file indicated by inputPath is not found
     * @throws IOException 
     */
-   private void setArticles(String inputPath, int ngCount) throws FileNotFoundException, IOException {
+   private void setArticles(String inputPath) throws FileNotFoundException, IOException {
       for (Row row : ExcelOutput.getSheet(inputPath)) {
          Iterator<Cell> cellIterator = row.cellIterator();
          
          try{
-            String contents     = cellIterator.next().getStringCellValue();
-            Sentiment sentiment = Sentiment.getSentiment(cellIterator.next().getStringCellValue());
+            String contents  = cellIterator.next().getStringCellValue();
+//            Sentiment sentiment = Sentiment.getSentiment(cellIterator.next().getStringCellValue());
+            String sentiment = cellIterator.next().getStringCellValue();
 
             if (!contents.isEmpty()) {
                //Format is an abstract method
                //Ngram.getNgrams, gets the ngCount ngrams from format(contents);
-               String[] formattedWords = Ngram.getNgrams(format(contents), ngCount);
+//               String[] formattedWords = Ngram.getNgrams(format(contents), ngCount);
                
-               this.articles.add(new Article(formattedWords, sentiment));
+//               this.articles.add(new Article(formattedWords, sentiment));
+               this.articles.add(new Article(contents, sentiment, ()->format(contents), this.ngCount));
             }
          }catch(InputMismatchException e){
             printErrors(e);
@@ -108,10 +117,11 @@ public abstract class Preprocess{
    }
 //</editor-fold>
    
-//<editor-fold defaultstate="collapsed" desc="Abstract methods">
-   public abstract void output(float outputs) throws IOException;
-   public abstract void output(float outputs, String name) throws IOException;
-   
+//<editor-fold defaultstate="collapsed" desc="Output">
+   public abstract void output(int outputs) throws IOException;
+//</editor-fold>   
+
+//<editor-fold defaultstate="collapsed" desc="Abstract Functions">
    /**
     * Specifies how the cell containing the whole article shall be formatted
     * before being placed in this.articles
@@ -132,24 +142,79 @@ public abstract class Preprocess{
    
    /**
     * Used for brevity purposes
-    * @param closeable the object to be closed
-    */
-   protected void closeSafely(Closeable closeable){
-      try{
-         closeable.close();
-      } catch (IOException e) {
-         printErrors(e);
-      }
-   }
-   
-   /**
-    * Invokes closeSafely on each of the closeables
     * @param closeables an array of Closeable objects
     */
    protected void closeSafely(Closeable... closeables){
       for (Closeable closeable : closeables) {
-         closeSafely(closeable);
+         try {
+            closeable.close();
+         } catch (IOException e) {
+            printErrors(e);
+         }
       }
    }
    //</editor-fold>
+
+//<editor-fold defaultstate="collapsed" desc="Utility Removers">
+   /**
+    * A general purpose utility function that calls the other removers
+    * @param corpusWords 
+    * @param externalRemovers 
+    */
+   protected void removeInvalidWords(HashMap<String, Float> corpusWords, Consumer<HashMap<String, Float>>... externalRemovers) {
+      for (Consumer<HashMap<String, Float>> externalRemover : externalRemovers) {
+         externalRemover.accept(corpusWords);
+      }
+      
+      removeInvalidSymbols(corpusWords);
+      remove1LetterWords(corpusWords);
+      
+   }
+   
+   /**
+    * Remove the invalid symbols from the start and end of the word
+    * Ex: "--anyos" -> "anyos", "((frj))" -> "frj"
+    * @param corpusWords
+    */
+   protected void removeInvalidSymbols(HashMap<String, Float> corpusWords){
+      final String RS = "[^a-zA-ZÑñ]"; //Regex sybols
+      
+//      Pattern pattern = Pattern.compile(REGEX_SYMBOLS);
+      Pattern pattern = Pattern.compile(
+         String.format("(%s+.*)|(.*%s+)", RS, RS));   //Starts or ends with a symbol
+      Pattern start   = Pattern.compile(RS+".*");     //Starts with a symbol
+      Pattern end     = Pattern.compile(".*"+RS);     //Ends with a symbol.
+      
+      //Temp contains words from corpusWords that start or end with a symbol
+      Map<String,Float> temp = corpusWords.entrySet().stream()
+         .filter(entry->pattern.matcher(entry.getKey()).matches())
+         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      
+      corpusWords.entrySet().removeAll(temp.entrySet());
+
+      //Place the words from temp back to corpusWords without their symbol
+      //on their start or end
+      temp.entrySet().forEach(entry->{
+         String key = entry.getKey();
+         while(start.matcher(key).matches()){
+            key = key.substring(1);
+         }
+         while(end.matcher(key).matches()){
+            key = key.substring(0, key.length()-1);
+         }
+         
+         corpusWords.put(key, entry.getValue());
+      });
+   }
+      
+   /**
+    * Remove words of length 1 except for "I" and "O"
+    * @param corpusWords 
+    */
+   protected void remove1LetterWords(HashMap<String, Float> corpusWords){
+      corpusWords.keySet().removeIf(k->{
+         return k.length() <= 1 && !(k.equalsIgnoreCase("i")||k.equalsIgnoreCase("o"));
+      });
+   }
+//</editor-fold>
 }

@@ -6,21 +6,24 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 import nlpfeatures.Intensifiers.IntensifierMethod;
 import nlpfeatures.Intensifiers.PrefixIntensifier;
-import nlpfeatures.Intensifiers.WordBeforeIntensifier;
+import nlpfeatures.Intensifiers.WordBeforeIsIntensifier;
+import nlpfeatures.Intensifiers.WordBeforeIsANegator;
 
 public class PreprocessSO_CAL extends Preprocess {
    private final String WEIGHT_PATH = "src\\weights\\";
    private final String TAGGER_PATH = "src\\tagger\\filipino.tagger";
-   private final String SPACE = " ";
+//   private final String SPACE = " ";
    private final Sentiment[] predictedSentiments;
    private final MaxentTagger tagger;
 
    private ArrayList<Weight> weights;
-   private ArrayList<IntensifierMethod> intensifiers;
+   private ArrayList<IntensifierMethod> intMethods;
+   
+   public PreprocessSO_CAL(Path path, int threadCount){
+      this(path, threadCount, 1);
+   }
 
    public PreprocessSO_CAL(Path path, int threadCount, int ngCount) {
       super(path, ngCount);
@@ -29,7 +32,7 @@ public class PreprocessSO_CAL extends Preprocess {
       initializeIntensifiers();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
-      this.predictedSentiments = new Sentiment[articles.size()];
+      this.predictedSentiments = new Sentiment[super.articles.size()];
       
       Worker[] workers = initializeWorkerThreads(threadCount);
       startWorkers(workers);
@@ -39,10 +42,30 @@ public class PreprocessSO_CAL extends Preprocess {
       getFundamentalNumbers();
    }
    
-   public PreprocessSO_CAL(Path path, int threadCount){
-      this(path, threadCount, 1);
+//<editor-fold defaultstate="collapsed" desc="Initializers">
+   
+   private void initializeWeights() {
+      try {
+         this.weights = new ArrayList<>();
+         this.weights.add(new Weight(WEIGHT_PATH + "ADJ.xlsx", 'J'));
+         this.weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
+         this.weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
+         this.weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
+//      this.weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
+      } catch (IOException ex) {
+         printErrors(ex);
+      }
    }
    
+   private void initializeIntensifiers(){
+      this.intMethods = new ArrayList<>();
+      this.intMethods.add(new PrefixIntensifier());
+      this.intMethods.add(new WordBeforeIsIntensifier());
+      this.intMethods.add(new WordBeforeIsANegator());
+   }
+   
+//</editor-fold>
+
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
    private void getFundamentalNumbers(){
       for(Sentiment sen: Sentiment.values()){
@@ -96,7 +119,7 @@ public class PreprocessSO_CAL extends Preprocess {
    private Worker[] initializeWorkerThreads(int threadCount) {
       Worker[] workers = new Worker[threadCount];
       
-      int partition = this.articles.size()/threadCount;
+      int partition = super.articles.size()/threadCount;
       for (int i = 0; i < workers.length; i++) {
          int start = i*partition;
          int end   = (i+1)*partition;
@@ -166,7 +189,7 @@ public class PreprocessSO_CAL extends Preprocess {
     * @param index Its index from ArrayList<String> article
     */
    private int getArticleWeight(int index) {
-      String taggedArticle      = this.tagger.tagString(inputToString(getDataAtIndex(index)));
+      String taggedArticle      = this.tagger.tagString(getFullArticleAt(index));
       TaggedWords[] taggedWords = setTaggedWords(taggedArticle);
       return getArticleWeight(taggedWords);
    }
@@ -226,71 +249,37 @@ public class PreprocessSO_CAL extends Preprocess {
       articleWeight += addIntensifierWeight(taggedWords);
       return articleWeight;
    }
-
-   private String inputToString(String[] toTag) {
-      StringBuilder sb = new StringBuilder();
-      for (String s : toTag) {
-         sb.append(s);
-         sb.append(SPACE);
-      }
-      return sb.toString();
-   }
+//
+//   private String inputToString(String[] toTag) {
+//      StringBuilder sb = new StringBuilder();
+//      for (String s : toTag) {
+//         sb.append(s);
+//         sb.append(SPACE);
+//      }
+//      return sb.toString();
+//   }
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Intensifier Code">
    private float addIntensifierWeight(TaggedWords[] taggedWords) {
-      Optional<Weight> adjWeight = weights.stream()
-         .filter(w->w.getTag()=='J')
-         .findFirst();
-      
-         if(!adjWeight.isPresent()){
-            throw new NoSuchElementException("Adjective weight is not present");
-         }
-         
       float total = 0;
-      for(IntensifierMethod intensifier : intensifiers){
-         total += intensifier.ifAdjective(taggedWords, adjWeight.get());
+      for(IntensifierMethod intMethod : this.intMethods){
+         total += intMethod.addIntensification(taggedWords, this.weights);
       }
       
+      //Checker
       if(total != 0){
          System.out.println("total = " + total);
       }
       return total;
    }
 //</editor-fold>
-   
-//<editor-fold defaultstate="collapsed" desc="Initializers">
-   
-   private void initializeWeights() {
-      try {
-         this.weights = new ArrayList<>();
-         this.weights.add(new Weight(WEIGHT_PATH + "ADJ.xlsx", 'J'));
-         this.weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
-         this.weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
-         this.weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
-//      this.weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
-      } catch (IOException ex) {
-         printErrors(ex);
-      }
-   }
-   
-   private void initializeIntensifiers(){
-      this.intensifiers = new ArrayList<>();
-      this.intensifiers.add(new PrefixIntensifier());
-      this.intensifiers.add(new WordBeforeIntensifier());
-   }
-   
-//</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Outputs">
-   @Override
-   public void output(float outputs) throws IOException {
-      output(outputs, "SO-CAL");
-   }
    
    @Override
-   public void output(float outputs, String name) throws IOException {
-      String fileName = String.format("%s%s", outputPath, name);
+   public void output(int outputs) throws IOException {
+      String fileName = String.format("%sSO-CAL", outputPath);
       ExcelOutput.output(this.predictedSentiments, fileName+".xlsx");
       
       try {
