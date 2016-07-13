@@ -1,4 +1,4 @@
-package nlpfeatures.ngram.NgramFilters;
+package Ngram.NgramFilters;
 
 import java.util.Arrays;
 import java.util.Collections;

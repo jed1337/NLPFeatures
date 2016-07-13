@@ -1,4 +1,4 @@
-package nlpfeatures.Intensifiers;
+package Socal.Intensifiers;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -31,9 +31,8 @@ public abstract class IntensifierMethod {
       int total = 0;
       for (int i = 0; i < tws.length; i++) {
          TaggedWords tw = tws[i];
-//         if(tw.getTag()=='J'){   //Adjective
+         
          if(validTags.matcher(String.valueOf(tw.getTag())).matches()){
-            System.out.println("Valid tag: "+tw);
             total += getIntensifierVal(tws, i, weights);
          }
       }

@@ -1,4 +1,4 @@
-package nlpfeatures.ngram.NgramFilters;
+package Ngram.NgramFilters;
 
 public interface NgramFilters {
    public boolean contains(String s);

@@ -1,19 +1,15 @@
-package nlpfeatures.ngram;
+package ngram;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.StringJoiner;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import nlpfeatures.Article;
 import nlpfeatures.Path;
 import nlpfeatures.Preprocess;
-import nlpfeatures.ngram.NgramFilters.NgramFilters;
-import org.apache.commons.lang3.mutable.MutableFloat;
+import Ngram.NgramFilters.NgramFilters;
+import java.util.Arrays;
 
 public class PreprocessNgram extends Preprocess{
    private final HashMap<String, Float> ngrams;
@@ -136,16 +132,15 @@ public class PreprocessNgram extends Preprocess{
       
       super.articles.stream()
          .map(a->a.getWords())
-         .forEach(sa->{
-            for (String s : sa) {
-               if(passesNgramFilters(s, ngFilters)){
-                  Float count = tempNG.get(s);
+         .flatMap(aw->Arrays.stream(aw))
+         .forEach(s->{
+            if(passesNgramFilters(s, ngFilters)){
+               Float count = tempNG.get(s);
 
-                  if (count == null) { // New ngram, make its count 1
-                     tempNG.put(s, 0.0f);
-                  } else {             // Existing ngram, increment its count
-                     tempNG.replace(s, count+1.0f);
-                  }
+               if (count == null) { // New ngram, make its count 1
+                  tempNG.put(s, 0.0f);
+               } else {             // Existing ngram, increment its count
+                  tempNG.replace(s, count+1.0f);
                }
             }
          });

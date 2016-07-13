@@ -1,6 +1,7 @@
-package nlpfeatures;
+package Tfidf;
 
 import java.util.ArrayList;
+import nlpfeatures.Article;
 
 public final class TFIDFCalculator {
    private final ArrayList<Article> articles;

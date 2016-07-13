@@ -1,7 +1,7 @@
 package nlpfeatures;
 
 import java.util.function.Supplier;
-import nlpfeatures.ngram.Ngram;
+import ngram.Ngram;
 
 public class Article {
    private final String fullArticle;

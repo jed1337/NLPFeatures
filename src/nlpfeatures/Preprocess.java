@@ -159,7 +159,7 @@ public abstract class Preprocess{
    /**
     * A general purpose utility function that calls the other removers
     * @param corpusWords 
-    * @param externalRemovers 
+    * @param externalRemovers Added custom removers. These are executed first.
     */
    protected void removeInvalidWords(HashMap<String, Float> corpusWords, Consumer<HashMap<String, Float>>... externalRemovers) {
       for (Consumer<HashMap<String, Float>> externalRemover : externalRemovers) {
@@ -168,18 +168,16 @@ public abstract class Preprocess{
       
       removeInvalidSymbols(corpusWords);
       remove1LetterWords(corpusWords);
-      
    }
    
    /**
     * Remove the invalid symbols from the start and end of the word
-    * Ex: "--anyos" -> "anyos", "((frj))" -> "frj"
-    * @param corpusWords
+    * Example: "--anyos" -> "anyos", "((frj))" -> "frj"
+    * @param corpusWords A HashMap containing invalid symbols
     */
    protected void removeInvalidSymbols(HashMap<String, Float> corpusWords){
-      final String RS = "[^a-zA-ZÑñ]"; //Regex sybols
+      final String RS = "[^a-zA-ZÑñ]"; //Not a letter
       
-//      Pattern pattern = Pattern.compile(REGEX_SYMBOLS);
       Pattern pattern = Pattern.compile(
          String.format("(%s+.*)|(.*%s+)", RS, RS));   //Starts or ends with a symbol
       Pattern start   = Pattern.compile(RS+".*");     //Starts with a symbol
@@ -187,8 +185,8 @@ public abstract class Preprocess{
       
       //Temp contains words from corpusWords that start or end with a symbol
       Map<String,Float> temp = corpusWords.entrySet().stream()
-         .filter(entry->pattern.matcher(entry.getKey()).matches())
-         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+         .filter(entry->pattern.matcher(entry.getKey()).matches())               //Only takes those that match pattern
+         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));     //Turn it to a Map
       
       corpusWords.entrySet().removeAll(temp.entrySet());
 
@@ -196,13 +194,18 @@ public abstract class Preprocess{
       //on their start or end
       temp.entrySet().forEach(entry->{
          String key = entry.getKey();
+         
+         //Removes symbols from the beginning
          while(start.matcher(key).matches()){
             key = key.substring(1);
          }
+         
+         //Removes symbols from the end
          while(end.matcher(key).matches()){
             key = key.substring(0, key.length()-1);
          }
          
+         //Return the clean values back to the CorpusWords
          corpusWords.put(key, entry.getValue());
       });
    }

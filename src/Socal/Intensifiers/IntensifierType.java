@@ -1,4 +1,4 @@
-package nlpfeatures.Intensifiers;
+package Socal.Intensifiers;
 
 public enum IntensifierType {
    //Hard coded the negator use at the WordBeforeIsANegator class

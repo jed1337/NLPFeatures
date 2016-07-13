@@ -1,4 +1,4 @@
-package nlpfeatures;
+package Socal;
 
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import java.io.FileOutputStream;
@@ -6,15 +6,21 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import nlpfeatures.Intensifiers.IntensifierMethod;
-import nlpfeatures.Intensifiers.PrefixIntensifier;
-import nlpfeatures.Intensifiers.WordBeforeIsIntensifier;
-import nlpfeatures.Intensifiers.WordBeforeIsANegator;
+import nlpfeatures.ExcelOutput;
+import Socal.Intensifiers.IntensifierMethod;
+import Socal.Intensifiers.PrefixIntensifier;
+import Socal.Intensifiers.WordBeforeIsIntensifier;
+import Socal.Intensifiers.WordBeforeIsANegator;
+import java.util.function.Supplier;
+import nlpfeatures.Path;
+import nlpfeatures.Preprocess;
+import nlpfeatures.Sentiment;
+import nlpfeatures.TaggedWords;
+import nlpfeatures.Weight;
 
 public class PreprocessSO_CAL extends Preprocess {
-   private final String WEIGHT_PATH = "src\\weights\\";
-   private final String TAGGER_PATH = "src\\tagger\\filipino.tagger";
-//   private final String SPACE = " ";
+   private final String WEIGHT_PATH = "src\\Socal\\Weights\\";
+   private final String TAGGER_PATH = "src\\Socal\\Tagger\\filipino.tagger";
    private final Sentiment[] predictedSentiments;
    private final MaxentTagger tagger;
 
@@ -27,23 +33,23 @@ public class PreprocessSO_CAL extends Preprocess {
 
    public PreprocessSO_CAL(Path path, int threadCount, int ngCount) {
       super(path, ngCount);
+      final int size = super.articles.size();
       
       initializeWeights();
       initializeIntensifiers();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
-      this.predictedSentiments = new Sentiment[super.articles.size()];
+      this.predictedSentiments = new Sentiment[size];
       
-      Worker[] workers = initializeWorkerThreads(threadCount);
+      Worker[] workers = getWorkerThreads(threadCount);
+      
       startWorkers(workers);
       
       System.out.println(Arrays.toString(this.predictedSentiments));
-      
       getFundamentalNumbers();
    }
    
 //<editor-fold defaultstate="collapsed" desc="Initializers">
-   
    private void initializeWeights() {
       try {
          this.weights = new ArrayList<>();
@@ -51,7 +57,6 @@ public class PreprocessSO_CAL extends Preprocess {
          this.weights.add(new Weight(WEIGHT_PATH + "ADV.xlsx", 'R'));
          this.weights.add(new Weight(WEIGHT_PATH + "NOUN.xlsx", 'N'));
          this.weights.add(new Weight(WEIGHT_PATH + "VERB.xlsx", 'V'));
-//      this.weights.add(new Weight(WEIGHT_PATH+"INT.xlsx", '?'));
       } catch (IOException ex) {
          printErrors(ex);
       }
@@ -62,8 +67,7 @@ public class PreprocessSO_CAL extends Preprocess {
       this.intMethods.add(new PrefixIntensifier());
       this.intMethods.add(new WordBeforeIsIntensifier());
       this.intMethods.add(new WordBeforeIsANegator());
-   }
-   
+   }   
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
@@ -114,9 +118,10 @@ public class PreprocessSO_CAL extends Preprocess {
    /**
     * Sets which articles each worker needs to process
     * @param threadCount The number of threads to be used
-    * @return
+    * distributing the load to the Workers
+    * @return an array of Workers bearing approximately equal load
     */
-   private Worker[] initializeWorkerThreads(int threadCount) {
+   private Worker[] getWorkerThreads(int threadCount) {
       Worker[] workers = new Worker[threadCount];
       
       int partition = super.articles.size()/threadCount;
@@ -158,8 +163,10 @@ public class PreprocessSO_CAL extends Preprocess {
          }
       }
    }
-
-   private class Worker extends Thread{
+//</editor-fold>
+   
+//<editor-fold defaultstate="collapsed" desc="Worker Thread">
+   public class Worker extends Thread {
       private final int start;
       private final int end;
       
@@ -170,14 +177,14 @@ public class PreprocessSO_CAL extends Preprocess {
       
       @Override
       public void run() {
-         for(int i=start; i<end; i++){
+         for (int i = start; i < end; i++) {
             int articleWeight = getArticleWeight(i);
             classifyArticle(articleWeight, i);
          }
       }
       
       @Override
-      public String toString(){
+      public String toString() {
          return String.format("Start: %d \t End: %d", start, end);
       }
    }
@@ -194,6 +201,25 @@ public class PreprocessSO_CAL extends Preprocess {
       return getArticleWeight(taggedWords);
    }
 
+   /**
+    * Todo Clean the code
+    * @param taggedWords The words in the article along with their corresponding
+    * parts of speech tag
+    * @return 
+    */
+   private int getArticleWeight(TaggedWords[] taggedWords) {
+      int articleWeight = 0;
+      for (Weight w : weights) {
+         articleWeight += Arrays.stream(taggedWords)
+            .filter(tw->tw.getTag() == w.getTag()) //The Weight tag is equal to the tag of the current word
+            .map(tw->w.getWordValue(tw.getWord())) //Get only the weights of each word (int)
+            .reduce(0, (acc, item) -> acc + item); //Collect all the weights, and return their total
+      }
+      
+      articleWeight += addIntensifierWeight(taggedWords);
+      return articleWeight;
+   }
+   
    /**
     * Given the weight of the article at the index, the function classifies
     * it into positive, negative or neutral
@@ -230,34 +256,6 @@ public class PreprocessSO_CAL extends Preprocess {
       }
       return taggedWords;
    }
-
-   /**
-    * Todo Clean the code
-    * @param taggedWords The words in the article along with their corresponding
-    * parts of speech tag
-    * @return 
-    */
-   private int getArticleWeight(TaggedWords[] taggedWords) {
-      int articleWeight = 0;
-      for (Weight w : weights) {
-         articleWeight += Arrays.stream(taggedWords)
-            .filter(tw->tw.getTag() == w.getTag()) //The Weight tag is equal to the tag of the current word
-            .map(tw->w.getWordValue(tw.getWord())) //Get only the weights of each word (int)
-            .reduce(0, (acc, item) -> acc + item); //Collect all the weights, and return their total
-      }
-      
-      articleWeight += addIntensifierWeight(taggedWords);
-      return articleWeight;
-   }
-//
-//   private String inputToString(String[] toTag) {
-//      StringBuilder sb = new StringBuilder();
-//      for (String s : toTag) {
-//         sb.append(s);
-//         sb.append(SPACE);
-//      }
-//      return sb.toString();
-//   }
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Intensifier Code">
@@ -276,7 +274,6 @@ public class PreprocessSO_CAL extends Preprocess {
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Outputs">
-   
    @Override
    public void output(int outputs) throws IOException {
       String fileName = String.format("%sSO-CAL", outputPath);

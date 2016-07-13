@@ -1,4 +1,4 @@
-package nlpfeatures.Intensifiers;
+package Socal.Intensifiers;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;

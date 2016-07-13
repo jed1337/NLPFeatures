@@ -1,4 +1,4 @@
-package nlpfeatures;
+package Tfidf;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import nlpfeatures.Path;
+import nlpfeatures.Preprocess;
 
 public class PreprocessTF_IDF extends Preprocess {
    private HashMap<String, Float> corpusWords;

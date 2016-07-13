@@ -1,4 +1,4 @@
-package nlpfeatures.ngram;
+package ngram;
 
 import java.util.Arrays;
 import java.util.StringJoiner;
