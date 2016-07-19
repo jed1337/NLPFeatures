@@ -131,8 +131,8 @@ public class PreprocessNgram extends Preprocess{
       HashMap<String, Float> tempNG = new HashMap<>();
       
       super.articles.stream()
-         .map(a->a.getWords())
-         .flatMap(aw->Arrays.stream(aw))
+         .map(a->a.getWords())            //Returns a stream of String[]
+         .flatMap(aw->Arrays.stream(aw))  //Returns a stream of String
          .forEach(s->{
             if(passesNgramFilters(s, ngFilters)){
                Float count = tempNG.get(s);

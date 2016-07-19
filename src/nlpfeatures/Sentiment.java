@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.InputMismatchException;
 
 public enum Sentiment {
-   POSITIVE, NEGATIVE, NEUTRAL;
+   POSITIVE, NEGATIVE, NEUTRAL, INVALID;
+   
+   private static final String[] whiteList=new String[]{"article", "sentiment"};
 
    /**
     * Gets the enum equivalent of the sentiment passed
@@ -14,14 +16,19 @@ public enum Sentiment {
     * is not a valid Sentiment
     */
    public static Sentiment getSentiment(String sentimentStr) {
-      sentimentStr = sentimentStr.toUpperCase();
-      
-      for(Sentiment s: Sentiment.values()){
-         if(s.toString().equals(sentimentStr)){
-            return s;
+      for(Sentiment sentiment: Sentiment.values()){
+         if(sentiment.toString().equalsIgnoreCase(sentimentStr)){
+            return sentiment;
          }
       }
-      throw new InputMismatchException
-        (sentimentStr+" is not a valid sentiment. Valid options are "+Arrays.toString(Sentiment.values()));
+      
+      for (String wl : whiteList) {
+         if(wl.equalsIgnoreCase(sentimentStr)){
+            return INVALID;
+         }
+      }
+      
+      throw new InputMismatchException(String.format(
+         "'%s' is not a valid sentiment. Valid options are: %s", sentimentStr, Arrays.toString(Sentiment.values())));
    }
 }

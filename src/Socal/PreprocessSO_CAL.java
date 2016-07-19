@@ -11,7 +11,6 @@ import Socal.Intensifiers.IntensifierMethod;
 import Socal.Intensifiers.PrefixIntensifier;
 import Socal.Intensifiers.WordBeforeIsIntensifier;
 import Socal.Intensifiers.WordBeforeIsANegator;
-import java.util.function.Supplier;
 import nlpfeatures.Path;
 import nlpfeatures.Preprocess;
 import nlpfeatures.Sentiment;

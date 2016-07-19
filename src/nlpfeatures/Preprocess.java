@@ -97,23 +97,16 @@ public abstract class Preprocess{
       for (Row row : ExcelOutput.getSheet(inputPath)) {
          Iterator<Cell> cellIterator = row.cellIterator();
          
-         try{
-            String contents  = cellIterator.next().getStringCellValue();
-//            Sentiment sentiment = Sentiment.getSentiment(cellIterator.next().getStringCellValue());
-            String sentiment = cellIterator.next().getStringCellValue();
+         String contents  = cellIterator.next().getStringCellValue();
+         String sentiment = cellIterator.next().getStringCellValue();
 
-            if (!contents.isEmpty()) {
-               //Format is an abstract method
-               //Ngram.getNgrams, gets the ngCount ngrams from format(contents);
-//               String[] formattedWords = Ngram.getNgrams(format(contents), ngCount);
-               
-//               this.articles.add(new Article(formattedWords, sentiment));
-               this.articles.add(new Article(contents, sentiment, ()->format(contents), this.ngCount));
-            }
-         }catch(InputMismatchException e){
-            printErrors(e);
+         if (!contents.isEmpty()) {
+            //Format is an abstract method
+            this.articles.add(new Article(contents, sentiment, ()->format(contents), this.ngCount));
          }
       }
+      this.articles.removeIf(a->a.getSentiment()==Sentiment.INVALID);
+      System.out.println("Pika");
    }
 //</editor-fold>
    

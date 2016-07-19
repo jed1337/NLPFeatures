@@ -14,11 +14,6 @@ public class Article {
       this.sentiment   = Sentiment.getSentiment(sentiment);
    }
 
-//   public Article(String[] text, Sentiment sentiment) {
-//      this.ngrams = text;
-//      this.sentiment = sentiment;
-//   }
-
    public String getFullArticle() {
       return fullArticle;
    }

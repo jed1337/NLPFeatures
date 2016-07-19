@@ -48,7 +48,7 @@ public class Ngram {
          ngrams[i] = concatWords(words, i, i+ngramCount);
       }
       
-      System.out.println("size = " + size);
+      // System.out.println("size = " + size);
       return ngrams;
    }
 }
