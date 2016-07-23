@@ -104,75 +104,55 @@ public class PreprocessSO_CAL extends Preprocess {
    }
 //</editor-fold>
 
-//<editor-fold defaultstate="collapsed" desc="Worker Thread">
-   public class Worker extends Thread {
-      private final int start;
-      private final int end;
-      
-      public Worker(int start, int end) {
-         this.start = start;
-         this.end = end;
+//<editor-fold defaultstate="collapsed" desc="Intensifier Code">
+   private float addIntensifierWeight(TaggedWords[] taggedWords) {
+      float total = 0;
+      for(IntensifierMethod intMethod : this.intMethods){
+         total += intMethod.addIntensification(taggedWords, this.weights);
       }
       
-      @Override
-      public void run() {
-         for (int i = start; i < end; i++) {
-            int articleWeight = getArticleWeight(i);
-            classifyArticle(articleWeight, i);
-         }
+      //Checker
+      if(total != 0){
+         System.out.println("total = " + total);
       }
-      
-      /**
-       * Given the weight of the article at the index, the function classifies
-       * it into positive, negative or neutral
-       * @param articleWeight 
-       * @param index 
-       */
-      private void classifyArticle(int articleWeight, int index) {
-         Sentiment sentiment;
-         if (articleWeight > 0) {
-            sentiment = Sentiment.POSITIVE;
-         } else if (articleWeight < 0) {
-            sentiment = Sentiment.NEGATIVE;
-         } else {
-            sentiment = Sentiment.NEUTRAL;
-         }
-         System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
-         articles.get(index).addPredictedSentiment("SO_CAL", sentiment);
-//         predictedSentiments[index] = sentiment;
-      }
-      
-      @Override
-      public String toString() {
-         return String.format("Start: %d \t End: %d", start, end);
-      }
+      return total;
    }
 //</editor-fold>
-
+   
 //<editor-fold defaultstate="collapsed" desc="Tag Article">
    /**
     * Tags an article and returns its weight
-    * @param index Its index from ArrayList<String> article
+    * @param index Its index from ArrayList of String super.articles
+    * @return The weight of the article
     */
    private int getArticleWeight(int index) {
-      String taggedArticle      = this.tagger.tagString(getFullArticleAt(index));
-      TaggedWords[] taggedWords = setTaggedWords(taggedArticle);
-      return getArticleWeight(taggedWords);
+      String taggedArticle = tagger.tagString(getFullArticleAt(index));
+      return getArticleWeight(taggedArticle);
+   }
+   
+   /**
+    * Tags an article and returns its weight
+    * This method can function without the use of super.articles
+    * @param articleContents an article's contents
+    * @return The weight of the article
+    */
+   public int getArticleWeight(String articleContents) {
+      TaggedWords[] taggedWords = setTaggedWords(articleContents);
+      return getArticleWeightFromTW(taggedWords);
    }
 
    /**
-    * Todo Clean the code
     * @param taggedWords The words in the article along with their corresponding
     * parts of speech tag
     * @return 
     */
-   private int getArticleWeight(TaggedWords[] taggedWords) {
+   private int getArticleWeightFromTW(TaggedWords[] taggedWords) {
       int articleWeight = 0;
       for (Weight w : weights) {
          articleWeight += Arrays.stream(taggedWords)
-            .filter(tw->tw.getTag() == w.getTag()) //The Weight tag is equal to the tag of the current word
-            .map(tw->w.getWordValue(tw.getWord())) //Get only the weights of each word (int)
-            .reduce(0, (acc, item) -> acc + item); //Collect all the weights, and return their total
+            .filter(tw->tw.getTag() == w.getTag())       //The Weight tag is equal to the tag of the current word
+            .mapToInt(tw->w.getWordValue(tw.getWord()))  //Get only the weights of each word (int)
+            .sum();
       }
       
       articleWeight += addIntensifierWeight(taggedWords);
@@ -198,21 +178,60 @@ public class PreprocessSO_CAL extends Preprocess {
    }
 //</editor-fold>
    
-//<editor-fold defaultstate="collapsed" desc="Intensifier Code">
-   private float addIntensifierWeight(TaggedWords[] taggedWords) {
-      float total = 0;
-      for(IntensifierMethod intMethod : this.intMethods){
-         total += intMethod.addIntensification(taggedWords, this.weights);
+//<editor-fold defaultstate="collapsed" desc="Classify Article">
+   /**
+    * Given the weight of the article at the index, the function classifies
+    * it into positive, negative or neutral
+    * @param articleWeight
+    * @param index
+    */
+   private void classifyArticle(int articleWeight, int index) {
+      Sentiment sentiment;
+      sentiment = getSentimentFromWeight(articleWeight);
+      System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
+      articles.get(index).addPredictedSentiment("SO_CAL", sentiment);
+   }
+
+   public Sentiment getSentimentFromWeight(int articleWeight) {
+      Sentiment sentiment;
+      if (articleWeight > 0) {
+         sentiment = Sentiment.POSITIVE;
+      } else if (articleWeight < 0) {
+         sentiment = Sentiment.NEGATIVE;
+      } else {
+         sentiment = Sentiment.NEUTRAL;
       }
-      
-      //Checker
-      if(total != 0){
-         System.out.println("total = " + total);
-      }
-      return total;
+      return sentiment;
    }
 //</editor-fold>
-   
+      
+//<editor-fold defaultstate="collapsed" desc="Worker Thread">
+   public class Worker extends Thread {
+      private final int start;
+      private final int end;
+      
+      public Worker(int start, int end) {
+         this.start = start;
+         this.end = end;
+      }
+      
+      @Override
+      public void run() {
+         for (int i = start; i < end; i++) {
+            int articleWeight = getArticleWeight(i);
+            classifyArticle(articleWeight, i);
+         }
+      }
+      
+      
+
+      @Override
+      public String toString() {
+         return String.format("Start: %d \t End: %d", start, end);
+      }
+   }
+//</editor-fold>
+
 //<editor-fold defaultstate="collapsed" desc="Worker Thread Functions">
    /**
     * Sets which articles each worker needs to process
@@ -281,25 +300,20 @@ public class PreprocessSO_CAL extends Preprocess {
             .collect(Collectors.toList());
       
       String fileName = String.format("%sSO-CAL", outputPath);
-      ExcelOutput.output(predictedSentiments, fileName+".xlsx");
+//      ExcelOutput.output(predictedSentiments, fileName+".xlsx");
       
       createSrtFile(fileName, predictedSentiments);
    }
    private void setupWorkerThreads(int threadCount) {
-//      this.predictedSentiments = new Sentiment[aSize];
-      
-      final int aSize = articles.size();
-      Worker[] workers = getWorkerThreads(threadCount, aSize);
+      Worker[] workers = getWorkerThreads(threadCount, articles.size());
       startWorkers(workers);
       
-//      System.out.println(Arrays.toString(this.predictedSentiments));
       getFundamentalNumbers(articles);
    }
    private void createSrtFile(String fileName, List<Sentiment> predictedSentiments) {
       try {
          FileOutputStream fos      = new FileOutputStream(fileName+".ser");
          ObjectOutputStream oos    = new ObjectOutputStream(fos);
-//         ArrayList<Sentiment> temp = new ArrayList<>(Arrays.asList(predictedSentiments));
          oos.writeObject(predictedSentiments);
          
          closeSafely(oos);
