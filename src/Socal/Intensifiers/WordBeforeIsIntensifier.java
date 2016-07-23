@@ -2,8 +2,8 @@ package Socal.Intensifiers;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
-import nlpfeatures.TaggedWords;
-import nlpfeatures.Weight;
+import Socal.TaggedWords;
+import Socal.Weight;
 
 public class WordBeforeIsIntensifier extends IntensifierMethod{
    

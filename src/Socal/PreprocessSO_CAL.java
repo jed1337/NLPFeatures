@@ -17,8 +17,6 @@ import nlpfeatures.Article;
 import nlpfeatures.Path;
 import nlpfeatures.Preprocess;
 import nlpfeatures.Sentiment;
-import nlpfeatures.TaggedWords;
-import nlpfeatures.Weight;
 
 public class PreprocessSO_CAL extends Preprocess {
    private final String WEIGHT_PATH = "src\\Socal\\Weights\\";

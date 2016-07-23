@@ -1,4 +1,4 @@
-package nlpfeatures;
+package Socal;
 
 public class TaggedWords {
    private final String word;
