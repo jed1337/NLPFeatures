@@ -11,6 +11,10 @@ import Socal.Intensifiers.IntensifierMethod;
 import Socal.Intensifiers.PrefixIntensifier;
 import Socal.Intensifiers.WordBeforeIsIntensifier;
 import Socal.Intensifiers.WordBeforeIsANegator;
+import java.util.List;
+import java.util.stream.Collectors;
+import nlpfeatures.Article;
+import nlpfeatures.ClassifierNames;
 import nlpfeatures.Path;
 import nlpfeatures.Preprocess;
 import nlpfeatures.Sentiment;
@@ -20,7 +24,7 @@ import nlpfeatures.Weight;
 public class PreprocessSO_CAL extends Preprocess {
    private final String WEIGHT_PATH = "src\\Socal\\Weights\\";
    private final String TAGGER_PATH = "src\\Socal\\Tagger\\filipino.tagger";
-   private final Sentiment[] predictedSentiments;
+//   private final Sentiment[] predictedSentiments;
    private final MaxentTagger tagger;
 
    private ArrayList<Weight> weights;
@@ -29,24 +33,18 @@ public class PreprocessSO_CAL extends Preprocess {
    public PreprocessSO_CAL(Path path, int threadCount){
       this(path, threadCount, 1);
    }
-
+   
    public PreprocessSO_CAL(Path path, int threadCount, int ngCount) {
       super(path, ngCount);
-      final int size = super.articles.size();
       
       initializeWeights();
       initializeIntensifiers();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
-      this.predictedSentiments = new Sentiment[size];
-      
-      Worker[] workers = getWorkerThreads(threadCount);
-      
-      startWorkers(workers);
-      
-      System.out.println(Arrays.toString(this.predictedSentiments));
-      getFundamentalNumbers();
+      setupWorkerThreads(threadCount);      
    }
+
+
    
 //<editor-fold defaultstate="collapsed" desc="Initializers">
    private void initializeWeights() {
@@ -70,16 +68,16 @@ public class PreprocessSO_CAL extends Preprocess {
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
-   private void getFundamentalNumbers(){
+   private void getFundamentalNumbers(ArrayList<Article> articles){
       for(Sentiment sen: Sentiment.values()){
          float tp = 0.0f; //True  positive
          float tn = 0.0f; //True  negative
          float fp = 0.0f; //False positive
          float fn = 0.0f; //False negative
          
-         for (int i = 0; i < this.articles.size(); i++) {
-            Sentiment trueSen = this.articles.get(i).getSentiment(); //Actual Sentiment
-            Sentiment predSen = this.predictedSentiments[i];         //Predicted Sentiment
+         for (Article article : articles) {
+            Sentiment trueSen = article.getActualSentiment(); //Actual Sentiment
+            Sentiment predSen = article.getPredictedSentiment(ClassifierNames.SO_CAL);         //Predicted Sentiment
             
             if(trueSen == sen && predSen == sen){
                tp++;
@@ -120,10 +118,11 @@ public class PreprocessSO_CAL extends Preprocess {
     * distributing the load to the Workers
     * @return an array of Workers bearing approximately equal load
     */
-   private Worker[] getWorkerThreads(int threadCount) {
+   private Worker[] getWorkerThreads(int threadCount, int aSize) {
       Worker[] workers = new Worker[threadCount];
       
-      int partition = super.articles.size()/threadCount;
+      final int partition = aSize/threadCount;
+      
       for (int i = 0; i < workers.length; i++) {
          int start = i*partition;
          int end   = (i+1)*partition;
@@ -131,7 +130,7 @@ public class PreprocessSO_CAL extends Preprocess {
          //If the number of articles is not divisible by the number of threads
          //Add the remaining articles to the last worker thread
          if(i == (workers.length-1)){
-            end += articles.size() % threadCount;
+            end += aSize % threadCount;
          }
          
          workers[i] = new Worker(start, end);
@@ -182,6 +181,26 @@ public class PreprocessSO_CAL extends Preprocess {
          }
       }
       
+      /**
+       * Given the weight of the article at the index, the function classifies
+       * it into positive, negative or neutral
+       * @param articleWeight 
+       * @param index 
+       */
+      private void classifyArticle(int articleWeight, int index) {
+         Sentiment sentiment;
+         if (articleWeight > 0) {
+            sentiment = Sentiment.POSITIVE;
+         } else if (articleWeight < 0) {
+            sentiment = Sentiment.NEGATIVE;
+         } else {
+            sentiment = Sentiment.NEUTRAL;
+         }
+         System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
+         articles.get(index).addPredictedSentiment(ClassifierNames.SO_CAL, sentiment);
+//         predictedSentiments[index] = sentiment;
+      }
+      
       @Override
       public String toString() {
          return String.format("Start: %d \t End: %d", start, end);
@@ -218,26 +237,7 @@ public class PreprocessSO_CAL extends Preprocess {
       articleWeight += addIntensifierWeight(taggedWords);
       return articleWeight;
    }
-   
-   /**
-    * Given the weight of the article at the index, the function classifies
-    * it into positive, negative or neutral
-    * @param articleWeight 
-    * @param index 
-    */
-   private void classifyArticle(int articleWeight, int index) {
-      Sentiment sentiment;
-      if (articleWeight > 0) {
-         sentiment = Sentiment.POSITIVE;
-      } else if (articleWeight < 0) {
-         sentiment = Sentiment.NEGATIVE;
-      } else {
-         sentiment = Sentiment.NEUTRAL;
-      }
-      System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
-      this.predictedSentiments[index] = sentiment;
-   }
-   
+
    /**
     * Given an already tagged articles, this function returns an array of TaggedWords
     * that contain a word and its appropriate tag
@@ -272,17 +272,50 @@ public class PreprocessSO_CAL extends Preprocess {
    }
 //</editor-fold>
 
-//<editor-fold defaultstate="collapsed" desc="Outputs">
+//<editor-fold defaultstate="collapsed" desc="Output">
+   /**
+    * Clssifies the articles and then creates an Excel and .srt file of the result
+    * @param threadCount Run this classifier with the following number of threads
+    * @throws IOException 
+    */
    @Override
-   public void output(int outputs) throws IOException {
-      String fileName = String.format("%sSO-CAL", outputPath);
-      ExcelOutput.output(this.predictedSentiments, fileName+".xlsx");
+   public void output(int threadCount) throws IOException {
+      setupWorkerThreads(threadCount);
       
+      List<Sentiment> predictedSentiments = 
+         super.articles.stream()
+            .map(a->a.getPredictedSentiment(ClassifierNames.SO_CAL))
+            .collect(Collectors.toList());
+      
+      
+      for (int i = 0; i < predictedSentiments.size(); i++) {
+         if(predictedSentiments.get(i)!=articles.get(i).getPredictedSentiment(ClassifierNames.SO_CAL)){
+            System.out.println("ERROR");
+         }
+      }
+              
+      String fileName = String.format("%sSO-CAL", outputPath);
+      ExcelOutput.output(predictedSentiments, fileName+".xlsx");
+      
+      createSrtFile(fileName, predictedSentiments);
+   }
+   private void setupWorkerThreads(int threadCount) {
+//      this.predictedSentiments = new Sentiment[aSize];
+      
+      final int aSize = articles.size();
+      Worker[] workers = getWorkerThreads(threadCount, aSize);
+      startWorkers(workers);
+      
+//      System.out.println(Arrays.toString(this.predictedSentiments));
+      getFundamentalNumbers(articles);
+      System.out.println("Pika");
+   }
+   private void createSrtFile(String fileName, List<Sentiment> predictedSentiments) {
       try {
          FileOutputStream fos      = new FileOutputStream(fileName+".ser");
          ObjectOutputStream oos    = new ObjectOutputStream(fos);
-         ArrayList<Sentiment> temp = new ArrayList<>(Arrays.asList(predictedSentiments));
-         oos.writeObject(temp);
+//         ArrayList<Sentiment> temp = new ArrayList<>(Arrays.asList(predictedSentiments));
+         oos.writeObject(predictedSentiments);
          
          closeSafely(oos);
          closeSafely(fos);
@@ -291,6 +324,7 @@ public class PreprocessSO_CAL extends Preprocess {
       }
    }
 //</editor-fold>
+
    
    @Override
    protected String[] format(String article){

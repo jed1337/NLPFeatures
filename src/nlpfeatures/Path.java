@@ -1,5 +1,7 @@
 package nlpfeatures;
 
+import java.util.InputMismatchException;
+
 public class Path {
    private final String inputPath;
    private final String outputPath;
@@ -9,6 +11,10 @@ public class Path {
       this.inputPath     = inputPath;
       this.outputPath    = outputPath;
       this.stopwordsPath = stopwordsPath;
+      
+      if(this.outputPath==null || this.stopwordsPath==null){
+         throw new InputMismatchException("Output path or stopwords path is null. Only the input path can be null");
+      }
    }
 
    public String getInputPath() {

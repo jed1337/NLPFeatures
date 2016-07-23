@@ -5,11 +5,11 @@ import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.InputMismatchException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -94,19 +94,33 @@ public abstract class Preprocess{
     * @throws IOException 
     */
    private void setArticles(String inputPath) throws FileNotFoundException, IOException {
-      for (Row row : ExcelOutput.getSheet(inputPath)) {
-         Iterator<Cell> cellIterator = row.cellIterator();
-         
-         String contents  = cellIterator.next().getStringCellValue();
-         String sentiment = cellIterator.next().getStringCellValue();
-
-         if (!contents.isEmpty()) {
-            //Format is an abstract method
-            this.articles.add(new Article(contents, sentiment, ()->format(contents), this.ngCount));
-         }
+      if(inputPath==null){
+         System.out.println("Input path is null.");
       }
-      this.articles.removeIf(a->a.getSentiment()==Sentiment.INVALID);
-      System.out.println("Pika");
+      else{
+         for (Row row : ExcelOutput.getSheet(inputPath)) {
+            Iterator<Cell> cellIterator = row.cellIterator();
+
+            String contents  = cellIterator.next().getStringCellValue();
+            String sentiment = cellIterator.next().getStringCellValue();
+
+            addArticle(contents, sentiment);
+         }
+         this.articles.removeIf(a->a.getActualSentiment()==Sentiment.NONE);
+      }
+   }
+//</editor-fold>
+
+//<editor-fold defaultstate="collapsed" desc="Add articles">
+   protected void addArticle(String contents){
+      addArticle(contents, Sentiment.NONE.toString());
+   }
+   protected void addArticle(String contents, String sentiment) {
+      if (contents.isEmpty()) {
+         throw new InvalidParameterException("The article's contents is empty");
+      }
+      //Format is an abstract method
+      this.articles.add(new Article(contents, sentiment, ()->format(contents), this.ngCount));
    }
 //</editor-fold>
    

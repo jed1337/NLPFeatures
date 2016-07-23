@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.InputMismatchException;
 
 public enum Sentiment {
-   POSITIVE, NEGATIVE, NEUTRAL, INVALID;
+   POSITIVE, NEGATIVE, NEUTRAL, NONE;
    
    private static final String[] whiteList=new String[]{"article", "sentiment"};
 
@@ -24,7 +24,7 @@ public enum Sentiment {
       
       for (String wl : whiteList) {
          if(wl.equalsIgnoreCase(sentimentStr)){
-            return INVALID;
+            return NONE;
          }
       }
       

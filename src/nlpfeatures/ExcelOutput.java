@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -14,7 +15,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class ExcelOutput{
    
    //Make this not repeat code
-   public static void output(Sentiment[]sentiments, String outputPath) throws FileNotFoundException, IOException {
+   public static void output(List<Sentiment> sentiments, String outputPath) throws FileNotFoundException, IOException {
       //Keep 100 rows in memory, exceeding rows will be flushed to disk
       SXSSFWorkbook workbook = new SXSSFWorkbook(100);
       Sheet sheet            = workbook.createSheet();
@@ -33,12 +34,12 @@ public class ExcelOutput{
     * @param data
     * @param sheet 
     */
-   private static void makeRows(Sentiment[] data, Sheet sheet) {
-      for (int i = 1; i <= data.length; i++) {
+   private static void makeRows(List<Sentiment> data, Sheet sheet) {
+      for (int i = 1; i <= data.size(); i++) {
          Row row        = sheet.createRow(i);
          int rCellCount = 0;
          row.createCell(rCellCount++).setCellValue(i);
-         row.createCell(rCellCount++).setCellValue(data[i-1].toString());
+         row.createCell(rCellCount++).setCellValue(data.get(i-1).toString());
       }      
    }
       
