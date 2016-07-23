@@ -14,7 +14,6 @@ import Socal.Intensifiers.WordBeforeIsANegator;
 import java.util.List;
 import java.util.stream.Collectors;
 import nlpfeatures.Article;
-import nlpfeatures.ClassifierNames;
 import nlpfeatures.Path;
 import nlpfeatures.Preprocess;
 import nlpfeatures.Sentiment;
@@ -24,27 +23,23 @@ import nlpfeatures.Weight;
 public class PreprocessSO_CAL extends Preprocess {
    private final String WEIGHT_PATH = "src\\Socal\\Weights\\";
    private final String TAGGER_PATH = "src\\Socal\\Tagger\\filipino.tagger";
-//   private final Sentiment[] predictedSentiments;
    private final MaxentTagger tagger;
 
    private ArrayList<Weight> weights;
    private ArrayList<IntensifierMethod> intMethods;
    
-   public PreprocessSO_CAL(Path path, int threadCount){
-      this(path, threadCount, 1);
+   public PreprocessSO_CAL(Path path){
+      this(path, 1);
    }
    
-   public PreprocessSO_CAL(Path path, int threadCount, int ngCount) {
+   public PreprocessSO_CAL(Path path, int ngCount) {
       super(path, ngCount);
       
       initializeWeights();
       initializeIntensifiers();
 
       this.tagger = new MaxentTagger(TAGGER_PATH);
-      setupWorkerThreads(threadCount);      
    }
-
-
    
 //<editor-fold defaultstate="collapsed" desc="Initializers">
    private void initializeWeights() {
@@ -77,7 +72,7 @@ public class PreprocessSO_CAL extends Preprocess {
          
          for (Article article : articles) {
             Sentiment trueSen = article.getActualSentiment(); //Actual Sentiment
-            Sentiment predSen = article.getPredictedSentiment(ClassifierNames.SO_CAL);         //Predicted Sentiment
+            Sentiment predSen = article.getPredictedSentiment("SO_CAL");         //Predicted Sentiment
             
             if(trueSen == sen && predSen == sen){
                tp++;
@@ -110,59 +105,7 @@ public class PreprocessSO_CAL extends Preprocess {
       System.out.println("Recall    : " + r);
    }
 //</editor-fold>
-   
-//<editor-fold defaultstate="collapsed" desc="Worker Thread Functions">
-   /**
-    * Sets which articles each worker needs to process
-    * @param threadCount The number of threads to be used
-    * distributing the load to the Workers
-    * @return an array of Workers bearing approximately equal load
-    */
-   private Worker[] getWorkerThreads(int threadCount, int aSize) {
-      Worker[] workers = new Worker[threadCount];
-      
-      final int partition = aSize/threadCount;
-      
-      for (int i = 0; i < workers.length; i++) {
-         int start = i*partition;
-         int end   = (i+1)*partition;
-         
-         //If the number of articles is not divisible by the number of threads
-         //Add the remaining articles to the last worker thread
-         if(i == (workers.length-1)){
-            end += aSize % threadCount;
-         }
-         
-         workers[i] = new Worker(start, end);
-      }
-      
-      return workers;
-   }
-   
-   /**
-    * Starts the worker threads and waits for them to finish executing
-    * before continuing on with the program
-    * 
-    * @param workers An array of Worker threads
-    */
-   private void startWorkers(Worker[] workers) {
-      System.out.println("Started tagging");
-      
-      for (int i = 0; i < workers.length; i++) {
-         System.out.println("Worker "+i+": " + workers[i]);
-         workers[i].start();
-      }
-      
-      for (Worker worker : workers) {
-         try {
-            worker.join();
-         } catch (InterruptedException ex) {
-            printErrors(ex);
-         }
-      }
-   }
-//</editor-fold>
-   
+
 //<editor-fold defaultstate="collapsed" desc="Worker Thread">
    public class Worker extends Thread {
       private final int start;
@@ -197,7 +140,7 @@ public class PreprocessSO_CAL extends Preprocess {
             sentiment = Sentiment.NEUTRAL;
          }
          System.out.println(String.format("Weight of %d is %d \t = %s", index, articleWeight, sentiment));
-         articles.get(index).addPredictedSentiment(ClassifierNames.SO_CAL, sentiment);
+         articles.get(index).addPredictedSentiment("SO_CAL", sentiment);
 //         predictedSentiments[index] = sentiment;
       }
       
@@ -271,6 +214,58 @@ public class PreprocessSO_CAL extends Preprocess {
       return total;
    }
 //</editor-fold>
+   
+//<editor-fold defaultstate="collapsed" desc="Worker Thread Functions">
+   /**
+    * Sets which articles each worker needs to process
+    * @param threadCount The number of threads to be used
+    * distributing the load to the Workers
+    * @return an array of Workers bearing approximately equal load
+    */
+   private Worker[] getWorkerThreads(int threadCount, int aSize) {
+      Worker[] workers = new Worker[threadCount];
+      
+      final int partition = aSize/threadCount;
+      
+      for (int i = 0; i < workers.length; i++) {
+         int start = i*partition;
+         int end   = (i+1)*partition;
+         
+         //If the number of articles is not divisible by the number of threads
+         //Add the remaining articles to the last worker thread
+         if(i == (workers.length-1)){
+            end += aSize % threadCount;
+         }
+         
+         workers[i] = new Worker(start, end);
+      }
+      
+      return workers;
+   }
+   
+   /**
+    * Starts the worker threads and waits for them to finish executing
+    * before continuing on with the program
+    * 
+    * @param workers An array of Worker threads
+    */
+   private void startWorkers(Worker[] workers) {
+      System.out.println("Started tagging");
+      
+      for (int i = 0; i < workers.length; i++) {
+         System.out.println("Worker "+i+": " + workers[i]);
+         workers[i].start();
+      }
+      
+      for (Worker worker : workers) {
+         try {
+            worker.join();
+         } catch (InterruptedException ex) {
+            printErrors(ex);
+         }
+      }
+   }
+//</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Output">
    /**
@@ -284,16 +279,9 @@ public class PreprocessSO_CAL extends Preprocess {
       
       List<Sentiment> predictedSentiments = 
          super.articles.stream()
-            .map(a->a.getPredictedSentiment(ClassifierNames.SO_CAL))
+            .map(a->a.getPredictedSentiment("SO_CAL"))
             .collect(Collectors.toList());
       
-      
-      for (int i = 0; i < predictedSentiments.size(); i++) {
-         if(predictedSentiments.get(i)!=articles.get(i).getPredictedSentiment(ClassifierNames.SO_CAL)){
-            System.out.println("ERROR");
-         }
-      }
-              
       String fileName = String.format("%sSO-CAL", outputPath);
       ExcelOutput.output(predictedSentiments, fileName+".xlsx");
       
@@ -308,7 +296,6 @@ public class PreprocessSO_CAL extends Preprocess {
       
 //      System.out.println(Arrays.toString(this.predictedSentiments));
       getFundamentalNumbers(articles);
-      System.out.println("Pika");
    }
    private void createSrtFile(String fileName, List<Sentiment> predictedSentiments) {
       try {
@@ -325,7 +312,6 @@ public class PreprocessSO_CAL extends Preprocess {
    }
 //</editor-fold>
 
-   
    @Override
    protected String[] format(String article){
       return article.split("\\s+");

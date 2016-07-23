@@ -10,14 +10,18 @@ public class Article {
    private final String[] ngrams;
    private final Sentiment actualSentiment;
    
-   private final EnumMap<ClassifierNames, Sentiment> predictedSentiments;
+   private final HashMap<String, Sentiment> predictedSentiments;
    
    public Article(String fullArticle, String sentiment, Supplier<String[]> supplier, int ngCount){
+      this(fullArticle, Sentiment.getSentiment(sentiment), supplier, ngCount);
+   }
+   
+   public Article(String fullArticle, Sentiment sentiment, Supplier<String[]> supplier, int ngCount){
       this.fullArticle     = fullArticle;
       this.ngrams          = Ngram.getNgrams(supplier.get(), ngCount);
       
-      this.actualSentiment     = Sentiment.getSentiment(sentiment);
-      this.predictedSentiments = new EnumMap<>(ClassifierNames.class);
+      this.actualSentiment     = sentiment;
+      this.predictedSentiments = new HashMap<>();
    }
 
    public String getFullArticle() {
@@ -32,15 +36,15 @@ public class Article {
       return actualSentiment;
    }
 
-   public EnumMap<ClassifierNames, Sentiment> getPredictedSentiments() {
+   public HashMap<String, Sentiment> getPredictedSentiments() {
       return predictedSentiments;
    }
    
-   public Sentiment getPredictedSentiment(ClassifierNames classifierName) {
+   public Sentiment getPredictedSentiment(String classifierName) {
       return predictedSentiments.get(classifierName);
    }
 
-   public void addPredictedSentiment(ClassifierNames classifierName, Sentiment sentiment){
+   public void addPredictedSentiment(String classifierName, Sentiment sentiment){
       this.predictedSentiments.put(classifierName, sentiment);
    }
 }

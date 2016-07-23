@@ -113,14 +113,22 @@ public abstract class Preprocess{
 
 //<editor-fold defaultstate="collapsed" desc="Add articles">
    protected void addArticle(String contents){
-      addArticle(contents, Sentiment.NONE.toString());
+      addArticle(contents, Sentiment.NONE);
    }
    protected void addArticle(String contents, String sentiment) {
+      addArticle(contents, Sentiment.getSentiment(sentiment));
+   }
+   protected void addArticle(String contents, Sentiment sentiment) {
       if (contents.isEmpty()) {
          throw new InvalidParameterException("The article's contents is empty");
       }
       //Format is an abstract method
       this.articles.add(new Article(contents, sentiment, ()->format(contents), this.ngCount));
+   }
+   protected void addArticles(ArrayList<Article> articles){
+      for (Article article : articles) {
+         addArticle(article.getFullArticle(), article.getActualSentiment());
+      }
    }
 //</editor-fold>
    
