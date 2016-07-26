@@ -3,9 +3,27 @@ package nlpfeatures;
 import java.util.Arrays;
 import java.util.InputMismatchException;
 
+/**
+ * An enum class containing the sentiments used.
+ * @author Jed Caychingco
+ */
 public enum Sentiment {
-   POSITIVE, NEGATIVE, NEUTRAL, NONE;
+   /** A positive sentiment */
+   POSITIVE, 
    
+   /** A negative sentiment */
+   NEGATIVE, 
+   
+   /** A neutral sentiment */
+   NEUTRAL, 
+   
+   /** Used if the word has no sentiment yet. */
+   NONE;
+   
+   /** 
+    * A list of words to not be considered when determining a word's sentiment.
+    * It is present here since these words are headers in the input Excel file.
+    */
    private static final String[] whiteList=new String[]{"article", "sentiment"};
 
    /**

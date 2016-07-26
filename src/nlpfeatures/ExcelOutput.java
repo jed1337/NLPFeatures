@@ -13,9 +13,13 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelOutput{
-   
-   //Make this not repeat code
-   public static void output(List<Sentiment> sentiments, String outputPath) throws FileNotFoundException, IOException {
+   /**
+    * Creates an Excel file of the sentiments at the specified output path
+    * @param sentiments A list of sentiments to be written on to the disk
+    * @param outputPath Where the output is to be written
+    * @throws IOException 
+    */
+   public static void output(List<Sentiment> sentiments, String outputPath) throws IOException {
       //Keep 100 rows in memory, exceeding rows will be flushed to disk
       SXSSFWorkbook workbook = new SXSSFWorkbook(100);
       Sheet sheet            = workbook.createSheet();
@@ -42,13 +46,6 @@ public class ExcelOutput{
          row.createCell(rCellCount++).setCellValue(data.get(i-1).toString());
       }      
    }
-      
-   private static void closeFile(SXSSFWorkbook workbook, String outputPath) throws FileNotFoundException, IOException{
-      try (FileOutputStream out = new FileOutputStream(outputPath)) {
-         workbook.write(out);
-      }
-      workbook.dispose(); // dispose of temporary files backing this workbook on disk
-   }
 
    /**
     * Returns the Row Iterator from the excel file in inputPath
@@ -57,7 +54,7 @@ public class ExcelOutput{
     * @throws FileNotFoundException If the file does not exist
     * @throws IOException 
     */
-   public static XSSFSheet getSheet(String inputPath) throws FileNotFoundException, IOException {
+   public static XSSFSheet getSheet(String inputPath) throws IOException {
       FileInputStream file = new FileInputStream(new File(inputPath));
       //Get the workbook instance for XLS file
       XSSFWorkbook workbook = new XSSFWorkbook(file);
@@ -65,5 +62,19 @@ public class ExcelOutput{
       XSSFSheet sheet = workbook.getSheetAt(0);
       
       return sheet;
+   }
+   
+   /**
+    * Writes the file to the disk and closes it afterwards
+    * @param workbook THe work book to write on
+    * @param outputPath
+    * @throws IOException 
+    */
+   private static void closeFile(SXSSFWorkbook workbook, String outputPath) throws IOException{
+      try (FileOutputStream out = new FileOutputStream(outputPath)) {
+         workbook.write(out);
+      }
+      workbook.dispose(); // dispose of temporary files backing this workbook on disk
+      workbook.close();
    }
 }

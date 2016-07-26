@@ -13,7 +13,7 @@ public class PrefixIntensifier extends IntensifierMethod{
    }
    
    @Override
-   protected void addIntensifiers() {
+   protected void addIntPhrases() {
       intPhrases.add(new Intensifier("napaka", IntensifierType.SUPERLATIVE));
       intPhrases.add(new Intensifier("pinaka", IntensifierType.SUPERLATIVE));
    }
@@ -32,7 +32,7 @@ public class PrefixIntensifier extends IntensifierMethod{
       return total;
    }
       
-   private boolean startsWith(TaggedWords tw, Intensifier in){
-      return tw.getWord().toLowerCase().startsWith(in.getIntensifier().toLowerCase());
+   private boolean startsWith(TaggedWords tw, Intensifier intensifier){
+      return tw.getWord().toLowerCase().startsWith(intensifier.getIntensifier().toLowerCase());
    }
 }

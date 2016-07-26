@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import nlpfeatures.ExcelOutput;
 import Socal.Intensifiers.IntensifierMethod;
 import Socal.Intensifiers.PrefixIntensifier;
 import Socal.Intensifiers.WordBeforeIsIntensifier;
@@ -18,28 +17,54 @@ import nlpfeatures.Path;
 import nlpfeatures.Preprocess;
 import nlpfeatures.Sentiment;
 
+/**
+ * This class is responsible for preprocessing the input to be used by the SO CAL
+ * @author Jed Caychingco
+ */
 public class PreprocessSO_CAL extends Preprocess {
+   
+   /** The path to the excel files containing the weights */
    private final String WEIGHT_PATH = "src\\Socal\\Weights\\";
+   
+   /** The path to the Filipino tagger */
    private final String TAGGER_PATH = "src\\Socal\\Tagger\\filipino.tagger";
-   private final MaxentTagger tagger;
+   
+   /** The tagger to be used */
+   private final MaxentTagger TAGGER;
 
+   /** The weights to be used */
    private ArrayList<Weight> weights;
+   
+   /** The intensifier methods to be used */
    private ArrayList<IntensifierMethod> intMethods;
    
+   /**
+    * Creates an instance of this class from the 
+    * specified path using unigrams
+    * @param path The path to the excel file containing article. This serves as the input.
+    */
    public PreprocessSO_CAL(Path path){
-      this(path, 1);
+      this(path, 1); 
    }
    
+   /**
+    * Creates an instance of this class from the 
+    * specified path using the specified ngram count
+    * @param path The path to the excel file containing article. This serves as the input.
+    * @param ngCount The number of ngrams to use
+    */
    public PreprocessSO_CAL(Path path, int ngCount) {
       super(path, ngCount);
-      
       initializeWeights();
       initializeIntensifiers();
 
-      this.tagger = new MaxentTagger(TAGGER_PATH);
+      this.TAGGER = new MaxentTagger(TAGGER_PATH);
    }
    
 //<editor-fold defaultstate="collapsed" desc="Initializers">
+   /**
+    * Initializes the weights.
+    */
    private void initializeWeights() {
       try {
          this.weights = new ArrayList<>();
@@ -52,6 +77,9 @@ public class PreprocessSO_CAL extends Preprocess {
       }
    }
    
+   /**
+    * Initializes the intensifiers
+    */
    private void initializeIntensifiers(){
       this.intMethods = new ArrayList<>();
       this.intMethods.add(new PrefixIntensifier());
@@ -61,7 +89,11 @@ public class PreprocessSO_CAL extends Preprocess {
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Fundamental Numbers">
-   private void getFundamentalNumbers(ArrayList<Article> articles){
+   /**
+    * Prints the fundamental numbers: Precision, Recall, F-Score, Accuracy
+    * @param articles The list used to get the fundemental numbers
+    */
+   private void printFundamentalNumbers(ArrayList<Article> articles){
       for(Sentiment sen: Sentiment.values()){
          float tp = 0.0f; //True  positive
          float tn = 0.0f; //True  negative
@@ -85,35 +117,32 @@ public class PreprocessSO_CAL extends Preprocess {
                fp++;
             }
          }
+         float p   = tp/(tp+fp);            //Precision
+         float r   = tp/(tp+fn);            //Recall
+         float fs  = (2*p*r)/(p+r);         //F-score
+         float acc = (tp+fn)/(tp+fp+tn+fn); //Accuracy
 
-         printFundamentalNumbers(tp, fp, fn, tn, sen);
+         System.out.println("=========="+sen+"==========");
+         System.out.println("Accuracy  : " + acc);
+         System.out.println("Precision : " + p);
+         System.out.println("F-Score   : " + fs);
+         System.out.println("Recall    : " + r);
       }
-   }
-
-   private void printFundamentalNumbers(float tp, float fp, float fn, float tn, Sentiment sen) {
-      float p   = tp/(tp+fp);            //Precision
-      float r   = tp/(tp+fn);            //Recall
-      float fs  = (2*p*r)/(p+r);         //F-score
-      float acc = (tp+fn)/(tp+fp+tn+fn); //Accuracy
-      
-      System.out.println("=========="+sen+"==========");
-      System.out.println("Accuracy  : " + acc);
-      System.out.println("Precision : " + p);
-      System.out.println("F-Score   : " + fs);
-      System.out.println("Recall    : " + r);
    }
 //</editor-fold>
 
 //<editor-fold defaultstate="collapsed" desc="Intensifier Code">
+   /**
+    * Loops through the tagged words and intensifies the words that
+    * can be intensified
+    * @param taggedWords A list of words to be checked for intensification
+    * @return The total value of the intensification made 
+    * using all the intensifier methods in this class.
+    */
    private float addIntensifierWeight(TaggedWords[] taggedWords) {
       float total = 0;
       for(IntensifierMethod intMethod : this.intMethods){
          total += intMethod.addIntensification(taggedWords, this.weights);
-      }
-      
-      //Checker
-      if(total != 0){
-         System.out.println("total = " + total);
       }
       return total;
    }
@@ -126,8 +155,8 @@ public class PreprocessSO_CAL extends Preprocess {
     * @return The weight of the article
     */
    private int getArticleWeight(int index) {
-      String taggedArticle = tagger.tagString(getFullArticleAt(index));
-      return getArticleWeight(taggedArticle);
+//      String taggedArticle = TAGGER.tagString(getFullArticleAt(index));
+      return getArticleWeight(getFullArticleAt(index));
    }
    
    /**
@@ -137,10 +166,29 @@ public class PreprocessSO_CAL extends Preprocess {
     * @return The weight of the article
     */
    public int getArticleWeight(String articleContents) {
-      TaggedWords[] taggedWords = setTaggedWords(articleContents);
+      String taggedArticle = TAGGER.tagString(articleContents);
+      TaggedWords[] taggedWords = getTaggedWords(taggedArticle);
       return getArticleWeightFromTW(taggedWords);
    }
 
+   /**
+    * Given an already tagged articles, this function returns an array of TaggedWords
+    * that contain a word and its appropriate tag
+    * 
+    * @param article
+    * @return 
+    */
+   private TaggedWords[] getTaggedWords(String article) {
+      String[] articleWords     = article.split("\\s+");
+      int awLength              = articleWords.length;
+      TaggedWords[] taggedWords = new TaggedWords[awLength];
+      
+      for (int i = 0; i < awLength; i++) {
+         taggedWords[i] = new TaggedWords(articleWords[i]);
+      }
+      return taggedWords;
+   }
+   
    /**
     * @param taggedWords The words in the article along with their corresponding
     * parts of speech tag
@@ -158,24 +206,6 @@ public class PreprocessSO_CAL extends Preprocess {
       articleWeight += addIntensifierWeight(taggedWords);
       return articleWeight;
    }
-
-   /**
-    * Given an already tagged articles, this function returns an array of TaggedWords
-    * that contain a word and its appropriate tag
-    * 
-    * @param taggedArticle
-    * @return 
-    */
-   private TaggedWords[] setTaggedWords(String taggedArticle) {
-      String[] articleWords     = taggedArticle.split("\\s+");
-      int awLength              = articleWords.length;
-      TaggedWords[] taggedWords = new TaggedWords[awLength];
-      
-      for (int i = 0; i < awLength; i++) {
-         taggedWords[i] = new TaggedWords(articleWords[i]);
-      }
-      return taggedWords;
-   }
 //</editor-fold>
    
 //<editor-fold defaultstate="collapsed" desc="Classify Article">
@@ -192,6 +222,13 @@ public class PreprocessSO_CAL extends Preprocess {
       articles.get(index).addPredictedSentiment("SO_CAL", sentiment);
    }
 
+   /**
+    * Returns the appropriate sentiment given the article's weight.
+    * @param articleWeight
+    * @return Positive if the weight's greater than 0,
+    * Negative if it is less than 0,
+    * and Neutral if it is equal to 0
+    */
    public Sentiment getSentimentFromWeight(int articleWeight) {
       Sentiment sentiment;
       if (articleWeight > 0) {
@@ -206,28 +243,47 @@ public class PreprocessSO_CAL extends Preprocess {
 //</editor-fold>
       
 //<editor-fold defaultstate="collapsed" desc="Worker Thread">
-   public class Worker extends Thread {
-      private final int start;
-      private final int end;
+   /**
+    * An inner class used to parallelize the classification of articles
+    */
+   private class Worker extends Thread {
+      /**
+       * The start index of {@code ArrayList<Weight> weights} to classify
+       */
+      private final int START;
+
+      /**
+       * The end index of {@code ArrayList<Weight> weights} to classify
+       */
+      private final int END;
       
+      /**
+       * Creates an instance of this class with the specified start and end index
+       * @param start
+       * @param end 
+       */
       public Worker(int start, int end) {
-         this.start = start;
-         this.end = end;
+         this.START = start;
+         this.END = end;
       }
       
+      /**
+       * Classifies each article within the range of [START, END)
+       */
       @Override
       public void run() {
-         for (int i = start; i < end; i++) {
+         for (int i = START; i < END; i++) {
             int articleWeight = getArticleWeight(i);
             classifyArticle(articleWeight, i);
          }
       }
       
-      
-
+      /**
+       * @return Start: {@code <START>} End: {@code <END>}
+       */
       @Override
       public String toString() {
-         return String.format("Start: %d \t End: %d", start, end);
+         return String.format("Start: %d \t End: %d", START, END);
       }
    }
 //</editor-fold>
@@ -304,12 +360,24 @@ public class PreprocessSO_CAL extends Preprocess {
       
       createSrtFile(fileName, predictedSentiments);
    }
+   
+   /**
+    * Redundant function?
+    * @param threadCount 
+    */
    private void setupWorkerThreads(int threadCount) {
       Worker[] workers = getWorkerThreads(threadCount, articles.size());
       startWorkers(workers);
       
-      getFundamentalNumbers(articles);
+      printFundamentalNumbers(articles);
    }
+   
+   /**
+    * Creates an .srt file of the predicted sentiments
+    * @param fileName The File name to be used. 
+    * The program automatically appends ".ser" at the end.
+    * @param predictedSentiments The list of predicted sentiments
+    */
    private void createSrtFile(String fileName, List<Sentiment> predictedSentiments) {
       try {
          FileOutputStream fos      = new FileOutputStream(fileName+".ser");
@@ -324,6 +392,11 @@ public class PreprocessSO_CAL extends Preprocess {
    }
 //</editor-fold>
 
+   /**
+    * Returns the words in an article
+    * @param article The article to be formatted
+    * @return 
+    */
    @Override
    protected String[] format(String article){
       return article.split("\\s+");

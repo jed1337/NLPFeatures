@@ -5,14 +5,27 @@ import java.util.regex.Pattern;
 import Socal.TaggedWords;
 import Socal.Weight;
 
+/**
+ * Applicable to all words with a negator before it
+ * @author Jed Caychingco
+ */
 public class WordBeforeIsANegator extends IntensifierMethod{
+   
+   /**
+    * {@inheritDoc } <br>
+    * Applicable to all words
+    */
    @Override
    protected void setValidTags() {
       validTags = Pattern.compile(".");
    }
 
+   /**
+    * {@inheritDoc } <br>
+    * Contains Filipino negators
+    */
    @Override
-   protected void addIntensifiers() {
+   protected void addIntPhrases() {
       intPhrases.add(new Intensifier("hindi", IntensifierType.NEGATOR));
       intPhrases.add(new Intensifier("di", IntensifierType.NEGATOR));
       intPhrases.add(new Intensifier("huwag", IntensifierType.NEGATOR));
@@ -24,9 +37,11 @@ public class WordBeforeIsANegator extends IntensifierMethod{
    }
 
       
-      /*
-       * If negator is found, check the weight of the following word then subtract or add 4 to it.
-       */
+   /**
+    * {@inheritDoc } <br>
+    * If negator is found, check the weight of the following word then subtract or add 4 to it.
+    * @return
+    */
    @Override
    public float getIntensifierVal(TaggedWords[] tws, int curIndex, ArrayList<Weight> weights) {
       float total = 0;
@@ -41,7 +56,6 @@ public class WordBeforeIsANegator extends IntensifierMethod{
          //made up of one word each
          if(tws[curIndex-1].getWord().equals(intPhraseWord)){
             float awValue = addWeight(intPhrase, weights, tws[curIndex]);
-            //Hardcoded
             //Since negators -4 for positive, and +4 for positive
             //IntensifierType.NEGATOR has a multiplier value of 1
             if(awValue>0){

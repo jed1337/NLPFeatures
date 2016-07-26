@@ -3,16 +3,29 @@ package Tfidf;
 import java.util.ArrayList;
 import nlpfeatures.Article;
 
+/**
+ * Used to calculate the term frequency - inverse frequency
+ * of each word relative to the entire corpus
+ * @author Jed Caychingco
+ */
 public final class TFIDFCalculator {
    private final ArrayList<Article> articles;
    private double dIdf;
    private String key;
    
+   /**
+    * Initializes this class with the specified articles.
+    * @param articles The corpus
+    */
    public TFIDFCalculator(ArrayList<Article> articles) {
       this.articles = articles;
       this.key = null;
    }
-
+   
+   /**
+    * The word to be classified
+    * @param key The key to be set
+    */
    public void setKey(String key) {
       this.key  = key;
       this.dIdf = idf(articles, key);

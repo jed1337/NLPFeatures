@@ -4,7 +4,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * A list of Filipino Negators
+ * @author Jed Caychingco
+ */
 public class Negators implements NgramFilters{
+   /** A list of Filipino negators */
    private final List<String> negators = newList("hindi di huwag wala ayaw aywan dili");
    
 //<editor-fold defaultstate="collapsed" desc="Utility functions">
@@ -53,7 +58,10 @@ public class Negators implements NgramFilters{
       }
       return false;
    }
-   
+
+   /**
+    * @return "Negators"
+    */
    @Override
    public String getName(){
       return "Negators";

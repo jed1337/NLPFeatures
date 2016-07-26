@@ -40,27 +40,6 @@ public class PreprocessNgram extends Preprocess{
    private void makeCSVOutput(String outputFileName, Collection<String> wordList)           throws IOException {
       try (FileWriter fw = new FileWriter(outputFileName+".csv")) {
          String NEW_LINE = "\n";
-//<editor-fold defaultstate="collapsed" desc="Old Code">
-//
-//         //Header
-//         append(fw, "Article");
-//         for(String word : wordList){
-//            append(fw, "\""+word+"\"");
-//         }
-//         append(fw, "Sentiment");
-//
-//         //Row
-//         for (Article article : super.articles) {
-//            fw.append(NEW_LINE);
-//            append(fw, "\""+article+"\"");
-//
-//            for (String word : wordList) {
-//               append(fw, article.getFullArticle().contains(word) ? "1" : "0");
-//            }//Places 1 if the ngram is present in the article, 0 otherwise
-//
-//            append(fw, article.getSentiment().name());
-//         }
-//</editor-fold>
          StringJoiner sj = new StringJoiner(",");
          
          //Header

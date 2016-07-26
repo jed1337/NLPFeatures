@@ -35,20 +35,19 @@ public class Ngram {
       return sj.toString();
    }
    
+   /**
+    * Returns the words with their appropriate ngram count
+    * @param words An array containing the input words
+    * @param ngramCount How many ngrams are needed
+    * @return 
+    */
    public static String[] getNgrams(String[] words, int ngramCount) {
       final int size  = words.length - ngramCount + 1;
       String[] ngrams = new String[size];
       
       for (int i = 0; i < size; i++) {
-//         StringJoiner sj = new StringJoiner(" ");
-//         for (int j = i; j < i+ngramCount; j++) {
-//            sj.add(words[j]);
-//         }
-//         ngrams[i] = sj.toString();
          ngrams[i] = concatWords(words, i, i+ngramCount);
       }
-      
-      // System.out.println("size = " + size);
       return ngrams;
    }
 }

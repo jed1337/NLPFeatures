@@ -1,31 +1,59 @@
 package Socal;
 
+/**
+ * The tagged words
+ * @author Jed Caychingco
+ */
 public class TaggedWords {
-   private final String word;
-   private final char tag;
+   /**
+    * The WORD
+    */
+   private final String WORD;
+   
+   /**
+    * The TAG of its part of speech
+    */
+   private final char TAG;
 
+   /**
+    * Parses the String input that's in the following format:
+    * <i>WORD/TAG</i>
+    * @param wordWithTag 
+    */
    public TaggedWords(String wordWithTag) {
       String[] temp = wordWithTag.split("/");
       
       if(temp.length==2){
-         this.tag  = temp[1].charAt(0);
-         this.word = temp[0];
+         this.WORD = temp[0];
+         this.TAG  = temp[1].charAt(0);
       } else{
-         this.word = "___";
-         this.tag = '?';
+         this.WORD = "___";
+         this.TAG = '?';
       }
    }
 
+   /**
+    * Returns the WORD
+    * @return 
+    */
    public String getWord() {
-      return word;
+      return WORD;
    }
 
+   /**
+    * Returns the TAG
+    * @return 
+    */
    public char getTag() {
-      return tag;
+      return TAG;
    }
 
+   
+   /**
+    * @return {@code WORD: TAG} 
+    */
    @Override
    public String toString() {
-      return String.format("%s: %c: ", word, tag);
+      return String.format("%s: %c: ", WORD, TAG);
    }
 }

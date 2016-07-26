@@ -10,19 +10,36 @@ import java.util.Map;
 import nlpfeatures.Path;
 import nlpfeatures.Preprocess;
 
+/**
+ * Used to get the most relevant words in the corpus. This is determined by 
+ * their term frequency - inverse document frequency (TF-IDF) value.
+ * @author Jed Caychingco
+ */
 public class PreprocessTF_IDF extends Preprocess {
+   /** Contains the words in the article along with their TF-IDF value */
    private HashMap<String, Float> corpusWords;
    
+
+   /**
+    * Creates an instance of this class from the 
+    * specified path using unigrams
+    * @param path The path to the excel file containing article. This serves as the input.
+    */
+   public PreprocessTF_IDF(Path path) {
+      this(path, 1);
+   }
+   
+   /**
+    * Creates an instance of this class from the 
+    * specified path using the specified ngram count
+    * @param path The path to the excel file containing article. This serves as the input.
+    * @param ngCount The number of ngrams to use
+    */
    public PreprocessTF_IDF(Path path, int ngCount) {
       super(path, ngCount);
       
       setCorpusWords();
-//      removeStopWords(corpusWords.keySet());
       removeInvalidWords(corpusWords, hashMap->removeStopWords(hashMap.keySet()));
-   }
-
-   public PreprocessTF_IDF(Path path) {
-      this(path, 1);
    }
    
    
@@ -59,6 +76,11 @@ public class PreprocessTF_IDF extends Preprocess {
    }
 
 //<editor-fold defaultstate="collapsed" desc="Outputs">
+   /**
+    * Creates a .ser file containing the most relevant words in the corpus
+    * @param percentage
+    * @throws IOException 
+    */
    @Override
    public void output(int percentage) throws IOException {
       try{
@@ -81,16 +103,16 @@ public class PreprocessTF_IDF extends Preprocess {
 //<editor-fold defaultstate="collapsed" desc="Removers">
    /**
     * Removes the stopwords from the given collection
-    * @param collection 
+    * @param collection The collection without stopwords
     */
    private void removeStopWords(Collection collection) {
       collection.removeAll(stopwords);
    }
 
    /**
-    * Removes the bottom percentage words
-    * @param percentage
-    * @return 
+    * Removes the low words
+    * @param percentage The cut off percentage
+    * @return A new HashMap without the low percentage words
     */
    private HashMap<String, Float> removeLowPercentageWords(float percentage) {
       int cutoff = (int) Math.floor(corpusWords.size() * percentage / 100);

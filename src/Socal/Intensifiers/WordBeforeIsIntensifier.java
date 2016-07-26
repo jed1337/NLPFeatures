@@ -5,15 +5,26 @@ import java.util.regex.Pattern;
 import Socal.TaggedWords;
 import Socal.Weight;
 
+/**
+ * Applicable to adjectives whose intensifiers are the other words before it
+ * @author Jed Caychingco
+ */
 public class WordBeforeIsIntensifier extends IntensifierMethod{
    
+   /**
+    * {@inheritDoc }
+    */
    @Override
    protected void setValidTags() {
       validTags = Pattern.compile("J");
    }
 
+   /**
+    * {@inheritDoc } <br>
+    * Contains Filipino phrases
+    */
    @Override
-   protected void addIntensifiers() {
+   protected void addIntPhrases() {
       intPhrases.add(new Intensifier("tunay na", IntensifierType.COMPARATIVE));
       intPhrases.add(new Intensifier("ubod ng", IntensifierType.SUPERLATIVE));
       intPhrases.add(new Intensifier("masyadong", IntensifierType.COMPARATIVE));
@@ -22,6 +33,10 @@ public class WordBeforeIsIntensifier extends IntensifierMethod{
       intPhrases.add(new Intensifier("totoo na", IntensifierType.COMPARATIVE));
    }
 
+   /**
+    * {@inheritDoc }
+    * @return 
+    */
    @Override
    public float getIntensifierVal(TaggedWords[] tws, int curIndex, ArrayList<Weight> weights) {
       float total = 0;
