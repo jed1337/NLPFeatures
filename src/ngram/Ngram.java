@@ -43,6 +43,11 @@ public class Ngram {
     */
    public static String[] getNgrams(String[] words, int ngramCount) {
       final int size  = words.length - ngramCount + 1;
+      
+      if(size<0){
+         return new String[]{};
+      }
+      
       String[] ngrams = new String[size];
       
       for (int i = 0; i < size; i++) {

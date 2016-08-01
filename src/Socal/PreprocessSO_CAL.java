@@ -7,10 +7,15 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import Socal.Intensifiers.IntensifierMethod;
+import Socal.Intensifiers.IntensifierType;
 import Socal.Intensifiers.PrefixIntensifier;
 import Socal.Intensifiers.WordBeforeIsIntensifier;
 import Socal.Intensifiers.WordBeforeIsANegator;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import nlpfeatures.Article;
 import nlpfeatures.Path;
@@ -93,7 +98,8 @@ public class PreprocessSO_CAL extends Preprocess {
     * Prints the fundamental numbers: Precision, Recall, F-Score, Accuracy
     * @param articles The list used to get the fundemental numbers
     */
-   private void printFundamentalNumbers(ArrayList<Article> articles){
+   private String getFundamentalNumbersString(ArrayList<Article> articles){
+      StringJoiner sj = new StringJoiner("\n====================\n");
       for(Sentiment sen: Sentiment.values()){
          float tp = 0.0f; //True  positive
          float tn = 0.0f; //True  negative
@@ -122,12 +128,15 @@ public class PreprocessSO_CAL extends Preprocess {
          float fs  = (2*p*r)/(p+r);         //F-score
          float acc = (tp+fn)/(tp+fp+tn+fn); //Accuracy
 
-         System.out.println("=========="+sen+"==========");
-         System.out.println("Accuracy  : " + acc);
-         System.out.println("Precision : " + p);
-         System.out.println("F-Score   : " + fs);
-         System.out.println("Recall    : " + r);
+//         System.out.println("=========="+sen+"==========");
+         sj.add(String.format("Sentiment: \t%s\nAccuracy: \t%s\nPrecision: \t%s\nF-Score: \t%s\nRecall: \t%s\n"
+            ,sen,acc, p, fs, r));
+//         System.out.println("Accuracy  : " + acc);
+//         System.out.println("Precision : " + p);
+//         System.out.println("F-Score   : " + fs);
+//         System.out.println("Recall    : " + r);
       }
+      return sj.toString();
    }
 //</editor-fold>
 
@@ -350,6 +359,8 @@ public class PreprocessSO_CAL extends Preprocess {
    public void output(int threadCount) throws IOException {
       setupWorkerThreads(threadCount);
       
+      tempMeasureIntensifier();
+      
       List<Sentiment> predictedSentiments = 
          super.articles.stream()
             .map(a->a.getPredictedSentiment("SO_CAL"))
@@ -360,16 +371,25 @@ public class PreprocessSO_CAL extends Preprocess {
       
       createSrtFile(fileName, predictedSentiments);
    }
+
+   /**
+    * Ad hoc function to view the stats of the intensifier method
+    * @throws IOException 
+    */
+   private void tempMeasureIntensifier() throws IOException {
+      String fn = String.format("\n\n%s \t %s\n", IntensifierType.SUPERLATIVE, IntensifierType.COMPARATIVE);
+      fn       += getFundamentalNumbersString(articles);
+      
+      Files.write(Paths.get(outputPath+"SuperCompare.txt"), fn.getBytes(), StandardOpenOption.APPEND);
+   }
    
    /**
-    * Redundant function?
-    * @param threadCount 
+    * Uses a number of threads to parallelize the classification
+    * @param threadCount The number of threads to use
     */
    private void setupWorkerThreads(int threadCount) {
       Worker[] workers = getWorkerThreads(threadCount, articles.size());
       startWorkers(workers);
-      
-      printFundamentalNumbers(articles);
    }
    
    /**

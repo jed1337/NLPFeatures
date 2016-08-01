@@ -24,20 +24,35 @@ public class PreprocessNgram extends Preprocess{
     * 
     * @param path
     * @param ngramCount Containins the ngram configurations to be used
-    * @param removeThreshold Contains the remove threasholds to be used
     * @param ngramFilters Used to filter the ngrams received
     * @throws IOException 
     */
-   public PreprocessNgram(Path path, int ngramCount, int[] removeThreshold, 
-                          NgramFilters... ngramFilters) throws IOException {
+   public PreprocessNgram(Path path, int ngramCount, NgramFilters... ngramFilters) throws IOException {
       super(path, ngramCount);
       
       this.ngrams       = getNgrams(ngramFilters);
       this.ngramFilters = ngramFilters;
    }
+
+   @Override
+   public void output(int removeThreshold) throws IOException {
+      //Used to format the Negators
+      StringJoiner sj = new StringJoiner(",", "[", "]");
+      sj.setEmptyValue("");
+      for (NgramFilters ngramFilter : ngramFilters) {
+         sj.add(ngramFilter.getName());
+      }
+         
+      String outputFileName =
+         String.format("%s%dGram_%dRm_%s", outputPath, super.getNgCount(), removeThreshold, sj.toString());
+
+      HashMap<String, Float> tempNgrams = new HashMap<>(ngrams);
+      removeInvalidWords(tempNgrams, hashMap->removeLowCountNgrams(hashMap, removeThreshold));
+      makeCSVOutput(outputFileName, tempNgrams.keySet());
+   }
    
 //<editor-fold defaultstate="collapsed" desc="Csv Tools">
-   private void makeCSVOutput(String outputFileName, Collection<String> wordList)           throws IOException {
+   private void makeCSVOutput(String outputFileName, Collection<String> wordList)throws IOException {
       try (FileWriter fw = new FileWriter(outputFileName+".csv")) {
          String NEW_LINE = "\n";
          StringJoiner sj = new StringJoiner(",");
@@ -51,45 +66,29 @@ public class PreprocessNgram extends Preprocess{
          
          //Row
          for (Article article : super.articles) {
-            sj.add(NEW_LINE);
-            sj.add("\""+article+"\"");
+            sj.add(NEW_LINE +"\""+article.getFullArticle()+"\"");
             
             for (String word : wordList) {
                sj.add(article.getFullArticle().contains(word)? "1" : "0");
             }
+            
+            sj.add(article.getActualSentiment().toString());
          }
+         
+         //Append the Strings to the file writer
+         fw.append(sj.toString());
          
          //generate whatever data you want
          fw.flush();
       }
    }
-   
-   private void append(FileWriter fw, String word) throws IOException {
-      char COMMA    = ',';
-      
-      fw.append(word);
-      fw.append(COMMA);
-   }
 //</editor-fold>
-
-   @Override
-   public void output(int num) throws IOException {
-      //Used to format the Negators
-      StringJoiner sj = new StringJoiner(",", "[", "]");
-      for (NgramFilters ngramFilter : ngramFilters) {
-         sj.add(ngramFilter.getName());
-      }
-         
-      String outputFileName =
-         String.format("%s%dGram_%dRm_%s", outputPath, super.getNgCount(), num, sj.toString());
-
-      removeInvalidWords(ngrams, hashMap->removeLowCountNgrams(hashMap, num));
-      makeCSVOutput(outputFileName, ngrams.keySet());
-   }
-
+   
    @Override
    protected String[] format(String article) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return article.toLowerCase()
+        .replaceAll(REGEX_WHITE_LIST, " ")
+        .split("\\s+");
    }
    
    private boolean passesNgramFilters(String ngram, NgramFilters... ngFilters){
@@ -112,15 +111,14 @@ public class PreprocessNgram extends Preprocess{
       super.articles.stream()
          .map(a->a.getWords())            //Returns a stream of String[]
          .flatMap(aw->Arrays.stream(aw))  //Returns a stream of String
+         .filter(s->passesNgramFilters(s, ngFilters))
          .forEach(s->{
-            if(passesNgramFilters(s, ngFilters)){
-               Float count = tempNG.get(s);
+            Float count = tempNG.get(s);
 
-               if (count == null) { // New ngram, make its count 1
-                  tempNG.put(s, 0.0f);
-               } else {             // Existing ngram, increment its count
-                  tempNG.replace(s, count+1.0f);
-               }
+            if (count == null) { // New ngram, make its count 1
+               tempNG.put(s, 0.0f);
+            } else {             // Existing ngram, increment its count
+               tempNG.replace(s, count+1.0f);
             }
          });
       return tempNG;

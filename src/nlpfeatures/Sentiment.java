@@ -49,4 +49,9 @@ public enum Sentiment {
       throw new InputMismatchException(String.format(
          "'%s' is not a valid sentiment. Valid options are: %s", sentimentStr, Arrays.toString(Sentiment.values())));
    }
+   
+   @Override
+   public String toString(){
+      return this.name();
+   }
 }
