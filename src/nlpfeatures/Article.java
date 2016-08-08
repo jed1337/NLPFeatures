@@ -41,7 +41,7 @@ public class Article {
     * @param ngCount The amount of ngrams to be used.
     */
    public Article(String fullArticle, Sentiment sentiment, Supplier<String[]> supplier, int ngCount){
-      this.fullArticle     = fullArticle;
+      this.fullArticle     = fullArticle.toLowerCase();
       this.ngrams          = Ngram.getNgrams(supplier.get(), ngCount);
       
       this.actualSentiment     = sentiment;

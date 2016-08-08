@@ -25,8 +25,12 @@ public class WordBeforeIsIntensifier extends IntensifierMethod{
     */
    @Override
    protected void addIntPhrases() {
-      intPhrases.add(new Intensifier("tunay na", IntensifierType.COMPARATIVE));
       intPhrases.add(new Intensifier("ubod ng", IntensifierType.SUPERLATIVE));
+      intPhrases.add(new Intensifier("sukdulang", IntensifierType.SUPERLATIVE));
+      intPhrases.add(new Intensifier("sukdulan ng", IntensifierType.SUPERLATIVE));
+      
+      intPhrases.add(new Intensifier("mas", IntensifierType.COMPARATIVE));
+      intPhrases.add(new Intensifier("tunay na", IntensifierType.COMPARATIVE));
       intPhrases.add(new Intensifier("masyadong", IntensifierType.COMPARATIVE));
       intPhrases.add(new Intensifier("masyado na", IntensifierType.COMPARATIVE));
       intPhrases.add(new Intensifier("totoong", IntensifierType.COMPARATIVE));

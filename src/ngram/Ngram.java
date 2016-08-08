@@ -30,7 +30,7 @@ public class Ngram {
    public static String concatWords(String[] words, int start, int end) {
       StringJoiner sj = new StringJoiner(" ");
       for (int i = start; i < end; i++) {
-         sj.add(words[i]);
+         sj.add(words[i].toLowerCase());
       }
       return sj.toString();
    }

@@ -65,8 +65,10 @@ public class PreprocessNgram extends Preprocess{
          sj.add("Sentiment");
          
          //Row
+         int articleNum = 0;
          for (Article article : super.articles) {
-            sj.add(NEW_LINE +"\""+article.getFullArticle()+"\"");
+//            sj.add(NEW_LINE +"\""+article.getFullArticle()+"\"");
+            sj.add(NEW_LINE + (++articleNum));
             
             for (String word : wordList) {
                sj.add(article.getFullArticle().contains(word)? "1" : "0");

@@ -16,6 +16,7 @@ public class PrefixIntensifier extends IntensifierMethod{
    protected void addIntPhrases() {
       intPhrases.add(new Intensifier("napaka", IntensifierType.SUPERLATIVE));
       intPhrases.add(new Intensifier("pinaka", IntensifierType.SUPERLATIVE));
+      intPhrases.add(new Intensifier("pina", IntensifierType.COMPARATIVE));
    }
    
    @Override
